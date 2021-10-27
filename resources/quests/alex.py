@@ -10,7 +10,7 @@ async def check(bot, message):
     if msg.startswith("c!alex") or msg.startswith("c!a"):
 
         messages = functions.addValue("alex", user, 1)
-        if messages >= questData.Message.required[functions.getProgress("alex", user).tier]:
+        if messages >= questData.Alex.required[functions.getProgress("alex", user).tier]:
             functions.setProgress("alex", user, [True, True, False])
             await functions.announceFinished(bot, message.author.guild, message.author, "alex")
 

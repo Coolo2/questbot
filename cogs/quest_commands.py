@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ext.commands import MemberConverter
 from discord_components import *
 
-from bot_commands import quests, start, redeem, tier, miniquests, xp, leaderboard, buy, list, catalog, sell, trade
+from bot_commands import quests, start, redeem, tier, miniquests, balance, leaderboard, buy, list, catalog, sell, trade, merge, shardproducers
 
 class quest_commands(commands.Cog):
     def __init__(self, bot, bot2=None):
@@ -35,10 +35,10 @@ class quest_commands(commands.Cog):
     async def command_tier(self, ctx, quest):
         await tier.tier(self.bot, ctx, quest)
     
-    @commands.command(name="xp", description="Get a user's quest XP", aliases=['questxp'])
+    @commands.command(name="balance", description="Get a user's balances of quest xp, stars and shards", aliases=['questxp', "xp", "shards", "bal"])
     @commands.guild_only()
-    async def command_xp(self, ctx, user : discord.Member = None):
-        await xp.xp(self.bot, ctx, user)
+    async def command_balance(self, ctx, user : discord.Member = None):
+        await balance.balance(self.bot, ctx, user)
     
     @commands.command(name="leaderboard", description="Get the server leaderboard", aliases=['lb', "leaders"])
     @commands.guild_only()
@@ -64,6 +64,16 @@ class quest_commands(commands.Cog):
     @commands.guild_only()
     async def command_sell(self, ctx, *, creature = None):
         await sell.sell(self.bot, ctx, creature)
+    
+    @commands.command(name="merge", description="Merge 5 creatures to create a shard producer", aliases=["merge-creature"])
+    @commands.guild_only()
+    async def command_merge(self, ctx, *, creature = None):
+        await merge.merge(self.bot, ctx, creature)
+    
+    @commands.command(name="shardproducers", description="List shard producers", aliases=["shard-producers", "producers"])
+    @commands.guild_only()
+    async def command_shardproducers(self, ctx, arg1 = None, *, arg2=None):
+        await shardproducers.shardproducers(self.bot, ctx, arg1, arg2)
     
     @commands.command(name="trade", description="Trade a creature with someone else", aliases=["trade-creature"])
     @commands.guild_only()

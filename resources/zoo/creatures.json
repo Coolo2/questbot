@@ -243,5 +243,12 @@
         "shiny_rythm_monkey": {"emoji": "<a:ry:824415873057947708>"},
         "shiny_ghost": {"emoji": "<a:gho:824415990523101205>"},
         "shiny_dippin'_dots": {"emoji": "<a:dip:824416097943552070>"}
+    },
+    "golden":{
+        "golden_test1":{"emoji":"goldentest1emoji"},
+        "golden_test2":{"emoji":"goldentest2emoji"},
+        "golden_test3":{"emoji":"goldentest3emoji"},
+        "golden_test4":{"emoji":"goldentest4emoji"},
+        "golden_test5":{"emoji":"goldentest5emoji"}
     }
 }

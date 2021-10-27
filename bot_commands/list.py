@@ -11,6 +11,8 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
     converter = MemberConverter()
     ctx.bot = bot
 
+    accepted = ["golden", "shiny", "standard"]
+
     page = 1
     creatureType = None
     user = None
@@ -21,12 +23,12 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
         try:
             user = await converter.convert(ctx, arg1)
         except:
-            if arg1.lower() == "shiny" or arg1.lower() == "standard":
+            if arg1.lower() in accepted:
                 creatureType = arg1.lower()
             else:
                 page = arg1
     elif arg3 == None:
-        if arg1.lower() == "shiny" or arg1.lower() == "standard":
+        if arg1.lower() in accepted:
             creatureType = arg1.lower()
             try:
                 user = await converter.convert(ctx, arg2)
@@ -49,7 +51,7 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
             user = await converter.convert(ctx, arg3)
     
     if not str(page).isnumeric():
-        return await ctx.send(f"> Invalid argument order. `{var.prefix}list *[shiny/standard] *[user] *[page]`")
+        return await ctx.send(f"> Invalid argument order. `{var.prefix}list *[{'/'.join(accepted)}] *[user] *[page]`")
     
     if user == None:
         user = ctx.author
@@ -65,8 +67,11 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
         allData.update(user.zoo.zoo.creaturesRaw["very_common"])
     elif creatureType == "shiny":
         allData.update(user.zoo.zoo.creaturesRaw["rare"])
+    elif creatureType == "golden":
+        allData.update(user.zoo.zoo.creaturesRaw["golden"])
     else:
         creatureType = None
+        allData.update(user.zoo.zoo.creaturesRaw["golden"])
         allData.update(user.zoo.zoo.creaturesRaw["rare"])
         allData.update(user.zoo.zoo.creaturesRaw["common"])
         allData.update(user.zoo.zoo.creaturesRaw["very_common"])
@@ -74,7 +79,7 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
     try:
         page = int(page)
     except:
-        return await ctx.send(content=f"> Page must be a number. `{var.prefix}list *[shiny/standard] *[user] *[page]`")
+        return await ctx.send(content=f"> Page must be a number. `{var.prefix}list *[{'/'.join(accepted)}] *[user] *[page]`")
     
     ownedUsr = user.zoo.creatures
 
@@ -100,6 +105,6 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
 
     embed = discord.Embed(title=f"{user.user}'s {creatureType + ' ' if creatureType else ''}creature list ({creatureCount}x)", description=["".join(creature_list) for creature_list in creatures][page-1], color=var.embed)
 
-    embed.set_footer(text=f"Page {page}/{len(creatures)}" + (f"  -  Use \"q!list {creatureType + ' ' if creatureType else ''}{page+1 if page != len(creatures) else 1}{f' {user.user.name}' if user.user != ctx.author else ''}\" to see the next page." if len(creatures) != 1 else ""))
+    embed.set_footer(text=f"Page {page}/{len(creatures)}" + (f"  -  Use \"{var.prefix}list {creatureType + ' ' if creatureType else ''}{page+1 if page != len(creatures) else 1}{f' {user.user.name}' if user.user != ctx.author else ''}\" to see the next page." if len(creatures) != 1 else ""))
 
     await ctx.send(embeds=[embed])

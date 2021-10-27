@@ -40,7 +40,7 @@ def custom_image(filename):
 @app.route('/')
 def home():
 
-    with open("data/xp.json") as f:
+    with open("data/values.json") as f:
         XP = json.load(f)
     return render_template('index.html', last_updated=dir_last_updated('/static'), XPData=Markup(XP))
 

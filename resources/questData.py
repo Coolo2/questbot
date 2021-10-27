@@ -1,6 +1,6 @@
 
 from resources import questbot, var
-from resources.quests import count, place, message, voiceChannel, fact, cookie, alex
+from resources.quests import count, place, message, voiceChannel, fact, cookie, alex, pingDino, greetings
 
 
 class Count:
@@ -107,4 +107,30 @@ class Alex:
     reward = [
         "", 
         questbot.Reward(3000, 1000)
+    ]
+
+class PingDino:
+
+    quest = pingDino
+    name="ping_dino"
+    description="Ping dino 5 times"
+    tiers=1
+    resetOnTier = True 
+    required = ["", 5]
+    reward = [
+        "",
+        questbot.Reward(3000, 1000)
+    ]
+
+class Greetings:
+
+    quest = greetings
+    name="greetings"
+    description="Mention and say hi to 5 new members"
+    tiers=1
+    resetOnTier = True 
+    required = ["", 5]
+    reward = [
+        "",
+        questbot.Reward(5000, 3000)
     ]

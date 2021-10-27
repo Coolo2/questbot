@@ -9,7 +9,7 @@ async def check(bot, message):
     if message.content.lower().startswith("c!fact"):
 
         messages = functions.addValue("fact", user, 1)
-        if messages >= questData.Message.required[functions.getProgress("fact", user).tier]:
+        if messages >= questData.Fact.required[functions.getProgress("fact", user).tier]:
             functions.setProgress("fact", user, [True, True, False])
             await functions.announceFinished(bot, message.author.guild, message.author, "fact")
 

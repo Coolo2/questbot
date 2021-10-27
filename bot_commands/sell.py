@@ -11,6 +11,7 @@ async def sell(bot, ctx, creature):
 
     embedNone = discord.Embed(title="Sell a creature", color=var.embed)
     embedNone.add_field(name="Sell Prices", value=f"""
+Golden Creatures: **10,000** - **50,000** {var.currency}
 Shiny Creatures: **1,000** - **3,000** {var.currency}
 Standard Creatures: **100** - **300** {var.currency}""")
     embedNone.add_field(name="Usage", value=f"{var.prefix}sell [creature name]", inline=False)
@@ -22,12 +23,12 @@ Standard Creatures: **100** - **300** {var.currency}""")
     
     validate = user.zoo.validateCreature(creatureName)
     if validate.valid == False:
-        return await ctx.send(content=f"> {validate.message} Check your list of creatures with `q!list`")
+        return await ctx.send(content=f"> {validate.message} Check your list of creatures with `{var.prefix}list`")
     
     creature = user.zoo.zoo.Creature(creatureName)
 
     user.zoo.removeCreature(creature.name)
-    user.zoo.saveUser()
+    user.zoo.saveCreatures()
 
     sellPrice = creature.sellPrice
 

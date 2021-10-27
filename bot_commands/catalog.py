@@ -11,10 +11,11 @@ async def catalog(bot, ctx, section = None, page = 1):
     
     ownedUsr = user.zoo.creatures
     
-    if section == None or section.lower() not in ["standard", "shiny"]:
+    if section == None or section.lower() not in ["standard", "shiny", "golden"]:
         embed = discord.Embed(title="Catalog", description=f"""
         Standard creatures: `{var.prefix}catalog standard`
         Shiny creatures: `{var.prefix}catalog shiny`
+        Golden creatures: `{var.prefix}catalog golden`
         """, color=var.embed)
 
         return await ctx.send(embeds=[embed])
@@ -24,7 +25,8 @@ async def catalog(bot, ctx, section = None, page = 1):
 
     if section == "shiny":
         creatureList = data["rare"]
-
+    elif section == "golden":
+        creatureList = data["golden"]
     else:
         data["very_common"].update(data["common"])
         creatureList = data["very_common"]
@@ -48,7 +50,7 @@ async def catalog(bot, ctx, section = None, page = 1):
 {''.join([creatureList[creature]['emoji'] if creature in ownedUsr else "<:__:827565769709191248>" for creature in creatureList][24+pageAdd:36+pageAdd])}
 {''.join([creatureList[creature]['emoji'] if creature in ownedUsr else "<:__:827565769709191248>" for creature in creatureList][36+pageAdd:48+pageAdd])}
 {''.join([creatureList[creature]['emoji'] if creature in ownedUsr else "<:__:827565769709191248>" for creature in creatureList][48+pageAdd:60+pageAdd])}
-{amount}/120 different {section} creatures collected
+{amount}/{len(creatureList)} different {section} creatures collected
         """, color=var.embed)
 
     embed.set_footer(text=f"Page {page}/2  -  Use {var.prefix}catalog {section} {1 if page == 2 else 2} to move to the next page.")

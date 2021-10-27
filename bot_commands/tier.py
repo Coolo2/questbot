@@ -2,7 +2,7 @@ import discord, random, aiohttp, json, os, time, datetime, asyncio, json, sys
 from discord.ext import commands
 from datetime import datetime, timedelta
 
-from resources import questCommons, questData, var, UB, globalFunctions
+from resources import questCommons, questData, var
 from resources import questCommons as functions
 
 from discord_components import *

@@ -1,13 +1,9 @@
 from resources import var
 import discord
-import json, requests, os, random
-from datetime import datetime
+import json, requests, random
+from datetime import datetime, timedelta
 
 from discord_components import *
-
-version = "v1"
-headers = {"Authorization": os.getenv("UBtoken")}
-base = f"https://unbelievaboat.com/api/{version}"
 
 class Validator():
 
@@ -38,9 +34,12 @@ class Zoo():
         def getCreature(self):
             is_shiny = self.calculatePerc(self.shinyPercentage)
             is_common = self.calculatePerc(63)
+            is_golden = self.calculatePerc(100)
 
-            if is_shiny:
-
+            if self.name == "collectors" and is_golden:
+                key = random.choice(list(self.zoo.creaturesRaw["golden"]))
+                return self.zoo.Creature(key, self.zoo.creaturesRaw["golden"][key])
+            elif is_shiny:
                 key = random.choice(list(self.zoo.creaturesRaw["rare"]))
                 return self.zoo.Creature(key, self.zoo.creaturesRaw["rare"][key])
             elif is_common:
@@ -61,9 +60,38 @@ class Zoo():
                 data = zoo.creatures[name]
 
             self.emoji = data["emoji"]
-            self.rarity = "rare" if name in zoo.creaturesRaw["rare"] else "common" if name in zoo.creaturesRaw else "very_common"
-            self.sellPrice = random.randint(100, 300) if self.rarity in ["common", "very_common"] else random.randint(1000, 3000)
+            self.rarity = "golden" if name in zoo.creaturesRaw["golden"] else "rare" if name in zoo.creaturesRaw["rare"] else "common" if name in zoo.creaturesRaw else "very_common"
 
+            if self.rarity in ["common", "very_common"]:
+                self.sellPrice = random.randint(100, 300)
+            elif self.rarity in ["rare"]:
+                self.sellPrice = random.randint(1000, 3000)
+            else:
+                self.sellPrice = random.randint(10000, 50000)
+    
+    class ShardProducer():
+        def __init__(self, name, birthday, level, lastRefreshed):
+            zoo = Zoo()
+
+            self.name = name 
+            self.readableName = name.replace("_", " ").title()
+
+            self.birthdate = datetime.strptime(birthday, "%d-%b-%Y (%H:%M:%S.%f)") if type(birthday) == str else birthday 
+            self.lastRefreshed = datetime.strptime(lastRefreshed, "%d-%b-%Y (%H:%M:%S.%f)") if type(lastRefreshed) == str else lastRefreshed 
+            self.level = level
+
+            data = zoo.creatures[name]
+
+            self.emoji = data["emoji"]
+            self.rarity = "shiny" if name in zoo.creaturesRaw["rare"] or name in zoo.creaturesRaw["golden"] else "standard"
+
+            self.hoursForShard = [None, 24, 8, 15, 12, 8][int(self.level)]
+
+            if self.rarity == "shiny":
+                self.shards = 5
+            else:
+                self.shards = 1
+            
     class Crates():
 
         def __init__(self, zoo):
@@ -95,7 +123,7 @@ class Zoo():
             self.collectors = zoo.Crate(
                 zoo, 
                 "collectors",
-                "75% chance of a creature that you do not have",
+                "75% chance of a creature that you do not have, 1% chance of a golden creature",
                 0x7F0C13, 
                 "https://cdn.discordapp.com/attachments/821774449459855423/822858046644289578/Collectors_Creature_Crate.png", 
                 "<:Collectors_Creature_Crate:822858278219546634>", 
@@ -232,6 +260,7 @@ class Zoo():
         
         allData = {}
 
+        allData.update(data["golden"])
         allData.update(data["rare"])
         allData.update(data["common"])
         allData.update(data["very_common"])
@@ -272,6 +301,8 @@ class Zoo():
         if foundCreature == False:
             return Validator(foundCreature, "The creature specified does not exist")
         return Validator(True)
+    
+    
 
 class User():
 
@@ -289,7 +320,7 @@ class User():
             if guild != None:
                 self.setGuild(guild)
 
-            r = requests.get(base + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", headers=headers)
+            r = requests.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", headers=var.UBheaders)
             data = r.json()
 
             self.rank = data["rank"]
@@ -305,7 +336,7 @@ class User():
             if guild != None:
                 self.setGuild(guild)
             
-            r = requests.patch(base + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", data=json.dumps({"cash":cash, "bank":bank}), headers=headers)
+            r = requests.patch(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", data=json.dumps({"cash":cash, "bank":bank}), headers=var.UBheaders)
             data = r.json()
 
             self.cash = data["cash"]
@@ -322,6 +353,7 @@ class User():
             self.zoo = None
 
             self.creatures = None
+            self.shardProducers = None
         
         def getZoo(self):
             self.zoo = Zoo()
@@ -334,6 +366,15 @@ class User():
                 self.creatures = data[str(self.userClass.user.id)] if str(self.userClass.user.id) in data else []
 
                 return self.creatures
+        
+        def getShardProducers(self):
+
+            with open("data/zoo/ownedShardProducers.json") as f:
+                data = json.load(f)
+
+            self.shardProducers = data[str(self.userClass.user.id)] if str(self.userClass.user.id) in data else {}
+
+            return self.shardProducers
         
         def validateCreature(self, creatureName):
 
@@ -353,7 +394,7 @@ class User():
             
             return Validator(True)
             
-        def removeCreature(self, creatureName):
+        def removeCreature(self, creatureName, amount=1):
 
             if self.creatures == None:
                 self.getCreatures()
@@ -365,6 +406,9 @@ class User():
             
             self.creatures.remove(creatureName)
 
+            for i in range(amount-1):
+                self.creatures.remove(creatureName)
+
             return creatureData
         
         def addCreature(self, creatureName):
@@ -374,7 +418,7 @@ class User():
             
             self.creatures.append(creatureName)
         
-        def saveUser(self):
+        def saveCreatures(self):
             with open("data/zoo/ownedCreatures.json") as f:
                 owned = json.load(f)
             
@@ -382,6 +426,45 @@ class User():
 
             with open("data/zoo/ownedCreatures.json", "w") as f:
                 json.dump(owned, f, indent=4) 
+        
+        def saveShardProducers(self):
+            with open("data/zoo/ownedShardProducers.json") as f:
+                owned = json.load(f)
+            
+            owned[str(self.userClass.user.id)] = self.shardProducers
+
+            with open("data/zoo/ownedShardProducers.json", "w") as f:
+                json.dump(owned, f, indent=4) 
+        
+        def refreshProducers(self):
+
+            user = self.userClass
+
+            if not self.shardProducers:
+                self.getShardProducers()
+            
+            if not self.zoo:
+                self.getZoo()
+            
+            for shardProducer in self.shardProducers:
+                producer = self.zoo.ShardProducer(
+                    shardProducer, 
+                    self.shardProducers[shardProducer]["birthdate"], 
+                    self.shardProducers[shardProducer]["level"],
+                    self.shardProducers[shardProducer]["last_refreshed"]
+                )
+
+                sinceRefresh = (datetime.now() - producer.lastRefreshed).total_seconds() / 60 / 60
+
+                while sinceRefresh >= producer.hoursForShard:
+                    sinceRefresh -= producer.hoursForShard
+                    self.userClass.addShards(producer.shards)
+
+                sinceRefresh = datetime.now() - timedelta(hours=sinceRefresh)
+
+                self.shardProducers[shardProducer]["last_refreshed"] = sinceRefresh.strftime("%d-%b-%Y (%H:%M:%S.%f)")
+
+            self.saveShardProducers()
             
 
     
@@ -391,6 +474,42 @@ class User():
 
         self.zoo = self.ZooUser(self)
         self.economy = self.EconomyUser(self)
+
+        self.xp = self.getXP()
+        self.shards = self.getShards()
+    
+    def getXP(self):
+        return self.getValue("xp")
+    def addXP(self, amount):
+        return self.setValue("xp", amount)
+    
+    def getShards(self):
+        return self.getValue("shards")
+    def addShards(self, amount):
+        return self.setValue("shards", amount)
+
+    def getValue(self, type):
+        with open(f"data/values.json") as f:
+            data = json.load(f)
+        setattr(self, type, 0)
+        if str(self.user.id) in data:
+            setattr(self, type, data[str(self.user.id)][type]) 
+        return getattr(self, type)
+
+    def setValue(self, type, amount):
+        with open(f"data/values.json") as f:
+            data = json.load(f)
+
+        if str(self.user.id) not in data:
+            data[str(self.user.id)] = {"xp":0, "shards":0}
+
+        data[str(self.user.id)][type] += amount
+        setattr(self, type, data[str(self.user.id)][type])
+
+        with open(f"data/values.json", "w") as f:
+            json.dump(data, f, indent=4)
+        
+        return getattr(self, type)
 
 class Reward():
 
@@ -435,3 +554,7 @@ class QuestProgress():
         self.vcs = []
         if quest == "voice_channel" and str(user.id) in data and "vcs" in data[str(user.id)]:
             self.vcs = data[str(user.id)]["vcs"]
+        
+        self.newMembers = []
+        if quest == "greetings" and str(user.id) in data and "newMembers" in data[str(user.id)]:
+            self.newMembers = data[str(user.id)]["newMembers"]

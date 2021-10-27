@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from resources.quests import count, place, voiceChannel, fact, cookie, alex
+from resources.quests import count, place, voiceChannel, fact, cookie, alex, pingDino, greetings
 from resources.quests import message as message_quest
 
 from resources import var
@@ -27,6 +27,8 @@ class events(commands.Cog):
 
                 await cookie.validate(self.bot, message)
                 await alex.validate(self.bot, message)
+                await pingDino.validate(self.bot, message)
+                await greetings.validate(self.bot, message)
     
     @commands.Cog.listener() 
     async def on_voice_state_update(self, member, before, after):

@@ -15,10 +15,10 @@ async def trade(bot, ctx, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,
     converter = MemberConverter()
 
     if arg2 == None:
-        embed = discord.Embed(title="Trade", description="""
-`q!trade [user] [yourCreature] [theirCreature]` - Create a new trade to a user (select creature later) and get a tradeID
+        embed = discord.Embed(title="Trade", description=f"""
+`{var.prefix}trade [user] [yourCreature] [theirCreature]` - Create a new trade to a user (select creature later) and get a tradeID
 
-`q!trade list [inbound/outbound] *[user]` - List trades
+`{var.prefix}trade list [inbound/outbound] *[user]` - List trades
         """, color=var.embed)
         try:
             return await ctx.send(embed=embed)
@@ -26,9 +26,9 @@ async def trade(bot, ctx, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,
             return await ctx.send(embeds=[embed])
     
     if arg2 == "list":
-        embed = discord.Embed(title="List trades", description="""
-`q!trade list inbound *[user]` - List inbound trades
-`q!trade list outbound *[user]` - List outbound trades
+        embed = discord.Embed(title="List trades", description=f"""
+`{var.prefix}trade list inbound *[user]` - List inbound trades
+`{var.prefix}trade list outbound *[user]` - List outbound trades
             """, color=var.embed)
         if arg3 == None:
             return await ctx.send(embed=embed)
@@ -62,7 +62,7 @@ async def trade(bot, ctx, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,
         return await ctx.send(embed=embed)
 
     if arg2 == None:
-        return await ctx.send(content="> Please choose a user to make a trade request to! (`q!trade [user]`)")
+        return await ctx.send(content=f"> Please choose a user to make a trade request to! (`{var.prefix}trade [user]`)")
     
     user = await converter.convert(ctx, arg2)
 
@@ -240,8 +240,8 @@ async def acceptTrade(bot, user, tradeID):
             trade.toUserClass.zoo.removeCreature(trade.toData.creature)
             trade.fromUserClass.zoo.removeCreature(trade.fromData.creature)
 
-            trade.toUserClass.zoo.saveUser()
-            trade.fromUserClass.zoo.saveUser()
+            trade.toUserClass.zoo.saveCreatures()
+            trade.fromUserClass.zoo.saveCreatures()
 
             await trade.end("Trade Completed")
             await trade.channel.send(f'> `{trade.fromUser}` got `{trade.toUser}`\'s {zoo.Creature(trade.toData.creature).readableName} in return for a {zoo.Creature(trade.fromData.creature).readableName}')

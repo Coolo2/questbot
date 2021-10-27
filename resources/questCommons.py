@@ -2,8 +2,25 @@ import json, discord, asyncio
 
 from resources import questData, var, questbot
 
-miniQuests = [questData.VoiceChannel, questData.Fact, questData.Cookie, questData.Alex]
-allQuests = [questData.Count, questData.Place, questData.Message, questData.VoiceChannel, questData.Fact, questData.Cookie, questData.Alex]
+miniQuests = [
+    questData.VoiceChannel, 
+    questData.Fact, 
+    questData.Cookie, 
+    questData.Alex, 
+    questData.PingDino, 
+    questData.Greetings
+]
+allQuests = [
+    questData.Count, 
+    questData.Place, 
+    questData.Message, 
+    questData.VoiceChannel, 
+    questData.Fact, 
+    questData.Cookie, 
+    questData.Alex, 
+    questData.PingDino, 
+    questData.Greetings
+]
 
 from discord_components import *
 

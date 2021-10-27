@@ -1,7 +1,5 @@
 from bot_commands.miniquests import miniquests
 import discord, random, aiohttp, json, os, time, datetime, asyncio, json, sys
-from discord.ext import commands
-from datetime import datetime, timedelta
 
 from resources import questCommons, questData, var
 from resources import questCommons as functions
@@ -33,6 +31,6 @@ async def quests(bot, ctx, member = None):
                 response = f"You havent started this quest{f' in tier {progress.tier}' if quest.tiers > 1 else ''} yet! Use **{var.prefix}start {name}**"
     
             embed.add_field(name=nameFormatted, value=response, inline=False)
-    embed.add_field(name="Quests", value= f"`To see miniquests use {var.prefix}miniquests`", inline=False)
+    embed.add_field(name="MiniQuests", value= f"`To see miniquests use {var.prefix}miniquests`", inline=False)
     
     await ctx.send(embeds=[embed])

@@ -2,7 +2,7 @@ import discord, random, aiohttp, json, os, time, datetime, asyncio, json, sys
 from discord.ext import commands
 from datetime import datetime, timedelta
 
-from resources import questCommons, questData, var, UB, globalFunctions
+from resources import questCommons, questData, var, questbot
 from resources import questCommons as functions
 
 from discord_components import *
@@ -29,14 +29,15 @@ async def redeem(bot, ctx, questName, extra=None):
 
                 reward = quest.reward[progress.tier]
 
-                economyUser = UB.EconomyUser(ctx.guild, user)
+                userClass = questbot.User(ctx.author)
+                economyUser = userClass.economy
                 economyUser.addBal(bank=reward.stars * multiplier)
 
                 if reward.xp != 0:
-                    globalFunctions.addXP(user, reward.xp * multiplier)
+                    userClass.addXP(reward.xp * multiplier)
                 
                 embed = discord.Embed(
-                    title=f"You redeemed {name}!", 
+                    title=f"You redeemed {name.replace('_', ' ').title()}!", 
                     description=f"You redeemed this quest, which gave you {f'**{reward.stars}** stars' if reward.stars != 0 else ''}{' and ' if reward.stars != 0 and reward.xp != 0 else ''}{f'**{reward.xp}** Quest XP' if reward.xp != 0 else ''}! {f'Use **{var.prefix}tier {name}** to tier up!' if quest.tiers > 1 and progress.tier < quest.tiers else ''}",
                     color=var.embedSuccess
                 )

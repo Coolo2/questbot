@@ -1,6 +1,6 @@
 import json, discord, random, asyncio
 
-from resources import var, UB, questbot
+from resources import var,questbot
 
 async def buy(bot, ctx, crateType):
 
@@ -43,7 +43,7 @@ async def buy(bot, ctx, crateType):
         return await ctx.send(embeds=[embed])
 
     user.zoo.addCreature(creature.name)
-    user.zoo.saveUser()
+    user.zoo.saveCreatures()
     user.economy.addBal(bank=0-crate.cost)
     
     amount = user.zoo.creatures.count(creature.name)
