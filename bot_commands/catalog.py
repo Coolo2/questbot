@@ -1,15 +1,15 @@
 import json, discord, random, asyncio
 from discord.ext.commands import MemberConverter
-from resources import var
+from resources import var, questbot
 
 
 async def catalog(bot, ctx, section = None, page = 1):
-    with open("resources/zoo/creatures.json", encoding="utf8") as f:
-        data = json.load(f) 
-    with open("data/zoo/ownedCreatures.json") as f:
-        owned = json.load(f) 
+
+    user = questbot.User(ctx.author)
+    user.zoo.getCreatures()
+    user.zoo.getZoo()
     
-    ownedUsr = owned[str(ctx.author.id)] if str(ctx.author.id) in owned else []
+    ownedUsr = user.zoo.creatures
     
     if section == None or section.lower() not in ["standard", "shiny"]:
         embed = discord.Embed(title="Catalog", description=f"""
@@ -20,6 +20,7 @@ async def catalog(bot, ctx, section = None, page = 1):
         return await ctx.send(embeds=[embed])
 
     section = section.lower()    
+    data = user.zoo.zoo.creaturesRaw
 
     if section == "shiny":
         creatureList = data["rare"]
@@ -50,6 +51,6 @@ async def catalog(bot, ctx, section = None, page = 1):
 {amount}/120 different {section} creatures collected
         """, color=var.embed)
 
-    embed.set_footer(text=f"Page {page}/2  -  Use q!catalog {section} {1 if page == 2 else 2} to move to the next page.")
+    embed.set_footer(text=f"Page {page}/2  -  Use {var.prefix}catalog {section} {1 if page == 2 else 2} to move to the next page.")
 
     return await ctx.send(embeds=[embed])

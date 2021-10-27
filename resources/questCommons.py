@@ -1,6 +1,6 @@
 import json, discord, asyncio
 
-from resources import questData, var, questClasses
+from resources import questData, var, questbot
 
 miniQuests = [questData.VoiceChannel, questData.Fact, questData.Cookie, questData.Alex]
 allQuests = [questData.Count, questData.Place, questData.Message, questData.VoiceChannel, questData.Fact, questData.Cookie, questData.Alex]
@@ -11,7 +11,7 @@ from bot_commands import redeem
 
 def getProgress(quest, user):
 
-    return questClasses.QuestProgress(quest, user)
+    return questbot.QuestProgress(quest, user)
 
 def setCustom(quest, user, name, value):
 

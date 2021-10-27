@@ -1,21 +1,30 @@
 {
     "368071242189897728": [
-        "sheep",
-        "mosquito",
         "corrupted_cube",
         "huebird",
         "blixer",
-        "fish",
         "dippin'_dots",
-        "goat",
-        "shiny_jackbox",
         "shiny_llama",
         "shiny_dog",
         "shiny_mover",
-        "octopus",
-        "shiny_lizard",
-        "chick",
         "shiny_zombie",
-        "shiny_brainslug"
+        "shiny_brainslug",
+        "chorus_kid",
+        "fish",
+        "tack_shooter",
+        "chipmunk",
+        "potato_mine",
+        "piranha_plant",
+        "flamingo",
+        "butterfly",
+        "shiny_pig"
+    ],
+    "418123290595426314": [
+        "shiny_clown",
+        "shiny_crewmate",
+        "shiny_piranha_plant",
+        "tack_shooter",
+        "shiny_butterfly",
+        "shiny_dino"
     ]
 }

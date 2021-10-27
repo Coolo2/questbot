@@ -1,6 +1,6 @@
 import json, discord, random, asyncio
 from discord.ext.commands import MemberConverter
-from resources import var
+from resources import var, questbot
 
 
 def chunks(lst, n):
@@ -50,34 +50,33 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
     
     if not str(page).isnumeric():
         return await ctx.send(f"> Invalid argument order. `{var.prefix}list *[shiny/standard] *[user] *[page]`")
-
-    with open("resources/zoo/creatures.json", encoding="utf8") as f:
-        data = json.load(f) 
-    with open("data/zoo/ownedCreatures.json") as f:
-        owned = json.load(f) 
     
     if user == None:
         user = ctx.author
     
+    user = questbot.User(user)
+    user.zoo.getCreatures()
+    user.zoo.getZoo()
+    
     allData = {}
 
     if creatureType == "standard":
-        allData.update(data["common"])
-        allData.update(data["very_common"])
+        allData.update(user.zoo.zoo.creaturesRaw["common"])
+        allData.update(user.zoo.zoo.creaturesRaw["very_common"])
     elif creatureType == "shiny":
-        allData.update(data["rare"])
+        allData.update(user.zoo.zoo.creaturesRaw["rare"])
     else:
         creatureType = None
-        allData.update(data["rare"])
-        allData.update(data["common"])
-        allData.update(data["very_common"])
+        allData.update(user.zoo.zoo.creaturesRaw["rare"])
+        allData.update(user.zoo.zoo.creaturesRaw["common"])
+        allData.update(user.zoo.zoo.creaturesRaw["very_common"])
 
     try:
         page = int(page)
     except:
-        return await ctx.send(content="> Page must be a number. `q!list *[shiny/standard] *[user] *[page]`")
+        return await ctx.send(content=f"> Page must be a number. `{var.prefix}list *[shiny/standard] *[user] *[page]`")
     
-    ownedUsr = owned[str(user.id)] if str(user.id) in owned else []
+    ownedUsr = user.zoo.creatures
 
     creaturesOld = []
     creatureCount = 0
@@ -89,18 +88,18 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
 
     creatures = list(chunks(creaturesOld, 15))
 
-    embedFail = discord.Embed(title="Uh Oh!", description=f"Could not find page `{page}` on {user}'s creature list. There are only `{len(creatures)}` pages on {user}'s' list.", color=0xFF0000)
+    embedFail = discord.Embed(title="Uh Oh!", description=f"Could not find page `{page}` on {user.user}'s creature list. There are only `{len(creatures)}` pages on {user.user}'s' list.", color=0xFF0000)
 
     if len(creatures) == 0:
-        return await ctx.send(f"> {user} has no creatures!")
+        return await ctx.send(f"> {user.user} has no creatures!")
     if page > len(creatures):
         try:
             return await ctx.send(embed=embedFail)
         except:
             return await ctx.send(embeds=[embedFail])
 
-    embed = discord.Embed(title=f"{user}'s {creatureType + ' ' if creatureType else ''}creature list ({creatureCount}x)", description=["".join(creature_list) for creature_list in creatures][page-1], color=var.embed)
+    embed = discord.Embed(title=f"{user.user}'s {creatureType + ' ' if creatureType else ''}creature list ({creatureCount}x)", description=["".join(creature_list) for creature_list in creatures][page-1], color=var.embed)
 
-    embed.set_footer(text=f"Page {page}/{len(creatures)}" + (f"  -  Use \"q!list {creatureType + ' ' if creatureType else ''}{page+1 if page != len(creatures) else 1}{f' {user.name}' if user != ctx.author else ''}\" to see the next page." if len(creatures) != 1 else ""))
+    embed.set_footer(text=f"Page {page}/{len(creatures)}" + (f"  -  Use \"q!list {creatureType + ' ' if creatureType else ''}{page+1 if page != len(creatures) else 1}{f' {user.user.name}' if user.user != ctx.author else ''}\" to see the next page." if len(creatures) != 1 else ""))
 
     await ctx.send(embeds=[embed])

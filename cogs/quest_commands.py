@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ext.commands import MemberConverter
 from discord_components import *
 
-from bot_commands import quests, start, redeem, tier, miniquests, xp, leaderboard, buy, list, catalog
+from bot_commands import quests, start, redeem, tier, miniquests, xp, leaderboard, buy, list, catalog, sell, trade
 
 class quest_commands(commands.Cog):
     def __init__(self, bot, bot2=None):
@@ -59,6 +59,20 @@ class quest_commands(commands.Cog):
     @commands.guild_only()
     async def command_catalog(self, ctx, section = None, page = 1):
         await catalog.catalog(self.bot, ctx, section, page)
+    
+    @commands.command(name="sell", description="Sell a creature from your collection", aliases=["sell-creature"])
+    @commands.guild_only()
+    async def command_sell(self, ctx, *, creature = None):
+        await sell.sell(self.bot, ctx, creature)
+    
+    @commands.command(name="trade", description="Trade a creature with someone else", aliases=["trade-creature"])
+    @commands.guild_only()
+    async def command_trade(self, ctx, arg2 = None, arg3 = None, arg4 = None, arg5 = None, arg6 = None, arg7 = None, arg8 = None, arg9 = None, arg10 = None, arg11 = None):
+        await trade.trade(self.bot, ctx, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11)
+    
+    @commands.command(name="help")
+    async def help(self, ctx):
+        await ctx.send(", ".join(command.name for command in self.bot.commands))
 
 def setup(bot):
     bot.add_cog(quest_commands(bot))
