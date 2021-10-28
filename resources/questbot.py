@@ -85,12 +85,19 @@ class Zoo():
             self.emoji = data["emoji"]
             self.rarity = "shiny" if name in zoo.creaturesRaw["rare"] or name in zoo.creaturesRaw["golden"] else "standard"
 
-            self.hoursForShard = [None, 24, 8, 15, 12, 8][int(self.level)]
+            self.hoursForShard = [None, 24, 18, 15, 12, 8][int(self.level)]
 
             if self.rarity == "shiny":
                 self.shards = 5
             else:
                 self.shards = 1
+            
+        def to_json(self):
+            return {
+                "birthdate":self.birthdate.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                "last_refreshed":self.lastRefreshed.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                "level":int(self.level)
+            }
             
     class Crates():
 
@@ -302,7 +309,32 @@ class Zoo():
             return Validator(foundCreature, "The creature specified does not exist")
         return Validator(True)
     
-    
+class Shop():
+
+    def __init__(self):
+        self.conversionRate = self.getConversionRate()
+
+    def getConversionRate(self):
+        date = datetime.today()
+
+        day = date.day 
+        hour = date.hour 
+
+        if hour > day:
+            randomCalc = day / hour 
+        else:
+            randomCalc = hour / day
+
+        lowest = 1
+        highest = 4
+        final = lowest
+
+        for i in range(10, 110, 10):
+            if randomCalc * i > lowest and randomCalc * i < highest:
+                final = randomCalc * i
+                
+        return final
+
 
 class User():
 

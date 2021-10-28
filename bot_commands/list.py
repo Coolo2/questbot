@@ -83,6 +83,8 @@ async def command_list(bot, ctx, arg1, arg2, arg3):
     
     ownedUsr = user.zoo.creatures
 
+    ownedUsr = list(sorted(ownedUsr, key=lambda item: ownedUsr.count(item), reverse=True))
+
     creaturesOld = []
     creatureCount = 0
 

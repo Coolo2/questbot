@@ -12,8 +12,13 @@
         },
         "shiny_bug": {
             "birthdate": "25-Oct-2021 (17:19:18.732957)",
-            "last_refreshed": "27-Oct-2021 (13:19:18.739962)",
+            "last_refreshed": "28-Oct-2021 (05:19:18.747963)",
             "level": 5
+        },
+        "shiny_dodo": {
+            "birthdate": "27-Oct-2021 (19:56:40.701236)",
+            "last_refreshed": "27-Oct-2021 (19:56:40.701236)",
+            "level": 1
         }
     }
 }

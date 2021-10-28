@@ -31,7 +31,7 @@ async def redeem(bot, ctx, questName, extra=None):
 
                 userClass = questbot.User(ctx.author)
                 economyUser = userClass.economy
-                economyUser.addBal(bank=reward.stars * multiplier)
+                economyUser.addBal(bank=reward.stars * multiplier, guild=ctx.guild)
 
                 if reward.xp != 0:
                     userClass.addXP(reward.xp * multiplier)
