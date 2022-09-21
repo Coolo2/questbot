@@ -63,7 +63,6 @@ class CheckoutView(discord.ui.View):
 async def crate(client : qc.Client, ctx : commands.Context, crate_type : str, cog):
 
     user = qc.classes.User(ctx.author)
-    user.zoo.getCreatures()
     user.zoo.getZoo()
 
     if crate_type == None:

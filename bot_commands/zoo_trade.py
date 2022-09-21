@@ -42,8 +42,8 @@ async def get_accept_view(client : qc.Client, zoo : qc.classes.Zoo, tradeID : in
             
 
             if trade.toData.accepted and trade.fromData.accepted:
-                trade.toUserClass.zoo.getCreatures()
-                trade.fromUserClass.zoo.getCreatures()
+                trade.toUserClass.zoo.creatures
+                trade.fromUserClass.zoo.creatures
 
                 trade.toUserClass.zoo.addCreature(trade.fromData.creature)
                 trade.fromUserClass.zoo.addCreature(trade.toData.creature)
@@ -113,8 +113,8 @@ async def trade(client : qc.Client, ctx : commands.Context, user : discord.User,
     if user == ctx.author:
         raise qc.errors.MildError("> You can't trade with yourself!")
 
-    your_creatures = author.zoo.getCreatures()
-    their_creatures = otherUser.zoo.getCreatures()
+    your_creatures = author.zoo.creatures
+    their_creatures = otherUser.zoo.creatures
 
     tradeID = len(zoo.trades) + 1
     

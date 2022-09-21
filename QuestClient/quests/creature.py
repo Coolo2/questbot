@@ -16,7 +16,7 @@ async def check(client : ClFr, user : discord.Member):
     clUser = classes.User(user)
     
 
-    counts = quest.setValue(user, len(clUser.zoo.getCreatures()))
+    counts = quest.setValue(user, len(clUser.zoo.creatures))
     if counts >= quest.required[quest.getProgress(user).tier]:
         quest.setProgress(user, [True, True, False])
         await quest.announceFinished(client, user.guild, user)

@@ -25,7 +25,7 @@ async def owned_creature_autocomplete(interaction : discord.Interaction, current
         userO = interaction.user
 
     user = qc.classes.User(userO)
-    user.zoo.getCreatures()
+    user.zoo.creatures
 
     return [
         app_commands.Choice(name=c.replace("_", " ").title(), value=c)
@@ -35,7 +35,7 @@ async def owned_creature_autocomplete(interaction : discord.Interaction, current
 async def mergeable_autocomplete(interaction : discord.Interaction, current : str):
 
     user = qc.classes.User(interaction.user)
-    user.zoo.getCreatures()
+    user.zoo.creatures
 
     return [
         app_commands.Choice(name=c.replace("_", " ").title(), value=c)

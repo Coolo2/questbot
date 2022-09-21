@@ -395,20 +395,18 @@ class User():
             self.userClass = user
             self.zoo : Zoo = None
 
-            self.creatures = None
             self.shardProducers = None
         
         def getZoo(self):
             self.zoo = Zoo()
-
-        def getCreatures(self):
-
+        
+        @property 
+        def creatures(self) -> typing.List[str]:
             with open("data/zoo/ownedCreatures.json") as f:
                 data = json.load(f)
 
-                self.creatures = data[str(self.userClass.user.id)] if str(self.userClass.user.id) in data else []
+                return data[str(self.userClass.user.id)] if str(self.userClass.user.id) in data else []
 
-                return self.creatures
         
         def getShardProducers(self):
 
@@ -430,7 +428,7 @@ class User():
                 return Validator(False, creatureExists.message)
             
             if self.creatures == None:
-                self.getCreatures()
+                self.creatures
             
             if creatureName not in self.creatures:
                 return Validator(False, "You do not own this creature")
@@ -440,7 +438,7 @@ class User():
         def removeCreature(self, creatureName, amount=1):
 
             if self.creatures == None:
-                self.getCreatures()
+                self.creatures
             
             if self.zoo == None:
                 self.getZoo()
@@ -457,7 +455,7 @@ class User():
         def addCreature(self, creatureName):
 
             if self.creatures == None:
-                self.getCreatures()
+                self.creatures
             
             self.creatures.append(creatureName)
         

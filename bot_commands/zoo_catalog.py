@@ -10,7 +10,6 @@ async def command(client : qc.Client, ctx : commands.Context, section : str, use
         userO = ctx.author
 
     user = qc.classes.User(userO)
-    user.zoo.getCreatures()
     user.zoo.getZoo()
     
     ownedUsr = user.zoo.creatures

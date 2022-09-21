@@ -21,7 +21,7 @@ async def command(client : qc.Client, ctx : commands.Context, page : int = None,
         oUser = ctx.author
     
     user = classes.User(oUser)
-    user.zoo.getCreatures()
+    user.zoo.creatures
     user.zoo.getZoo()
     
     allData = {}

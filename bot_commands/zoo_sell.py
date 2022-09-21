@@ -14,7 +14,7 @@ async def command(client : qc.Client, ctx : commands.Context, creature : str):
 
     user = qc.classes.User(ctx.author)
     
-    user.zoo.getCreatures()
+    user.zoo.creatures
     user.zoo.getZoo()
     
     creatureName = creature.replace(" ", "_").lower()
