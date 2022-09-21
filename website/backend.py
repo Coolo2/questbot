@@ -4,7 +4,7 @@ import os, time, json, base64
 from resources import var
 from website.oauth import Oauth as oauth
 from flask_minify import minify
-from resources import encryption
+from website import encryption
 from gevent.pywsgi import WSGIServer
 from gevent import monkey
 

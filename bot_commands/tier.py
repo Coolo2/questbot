@@ -1,60 +1,70 @@
-import discord, random, aiohttp, json, os, time, datetime, asyncio, json, sys
+#from bot_commands.miniquests import miniquests
+import discord
 from discord.ext import commands
-from datetime import datetime, timedelta
 
-from resources import questCommons, questData, var
-from resources import questCommons as functions
+import QuestClient as qc
 
-from discord_components import *
+from discord import app_commands
 
-from bot_commands import start
+async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
 
-async def tier(bot, ctx, questName):
+    for quest in client.quest.quests + client.quest.miniquests:
 
-    for quest in questCommons.allQuests:
+        if quest.name.lower() == quest_name.lower():
 
-        if quest.name.lower() == questName.lower():
-
-            name = quest.name
-            progress = functions.getProgress(quest.name, ctx.author)
-            user = ctx.author
+            user : discord.Member = ctx.author if hasattr(ctx, "author") else ctx.user
+            progress = quest.getProgress(user)
 
             if progress.started and progress.finished and progress.redeemed: 
                 tier = progress.tier
 
                 if int(tier) >= quest.tiers:
-                    return await ctx.send(embeds=[discord.Embed(color=var.embed, title="GG!", description="You have fully completed this quest! GG!")])
+                    return await ctx.send(embeds=[discord.Embed(color=qc.var.embed, title="GG!", description="You have fully completed this quest! GG!")])
 
-                quest.quest.tierUp(user)
+                quest.tierUp(user)
 
+                view = discord.ui.View(timeout=None)
 
-                button = Button(style=ButtonStyle.blue, label="Start Next Tier", disabled=False, id="startButton")
+                class button(discord.ui.Button):
 
-                msg = await ctx.send(embeds=[discord.Embed(color=var.embedSuccess, title="Tiered up!", description=f"You have been tiered up to tier {tier+1}! Use **{var.prefix}start {name}** to begin tier " + str(int(tier) + 1) + "!")], components=[button])
-                button.set_disabled(True)
-                button.set_style(3)
+                    def __init__(self, client : qc.Client, quest):
+                        self.quest = quest
+                        self.client = client
 
-                try:
-                    async def wait_loop():
-                        res = await bot.wait_for("button_click", timeout= 30, check = lambda i: i.custom_id == "startButton")
+                        super().__init__(style=discord.ButtonStyle.blurple, label="Start Next Tier")
 
-                        if res.user == ctx.author:
-                            await res.respond(type=7, components=[button])
-                            await start.start(bot, ctx, name)
-                        else:
-                            await res.send("Nice try... You aren't the right person!")
-                            await wait_loop()
-                    await wait_loop()
+                    async def callback(self, interaction: discord.Interaction):
 
-                except asyncio.TimeoutError:
-                    await msg.edit(components=[button])
+                        tree : app_commands.CommandTree = client.bot.tree
+
+                        if interaction.user.id != user.id:
+                            return await interaction.response.send_message("You are not the initiator.", ephemeral=True)
+                        
+                        self.disabled = True
+
+                        class FakeCog():
+                            def __init__(self, client : qc.Client):
+                                self.client = client 
+                                self.bot = client.bot
+
+                        await tree.get_command("start")._callback(FakeCog(self.client), interaction, self.quest.name)
+
+                view.add_item(button(client=client, quest=quest))
+
+                send = ctx.response.send_message if isinstance(ctx, discord.Interaction) else ctx.send
+
+                await send(
+                    embed=discord.Embed(
+                        color=qc.var.embedSuccess, 
+                        title="Tiered up!", 
+                        description=f"You have been tiered up to tier {tier+1}! Use **{qc.var.prefix}start {quest.name}** to begin tier " + str(int(tier) + 1) + "!"
+                    ),
+                    view=view
+                )
 
             elif progress.started and progress.finished:
-                await ctx.send(embeds=[discord.Embed(color=var.embedFail, title="Oops!", description="You haven't redeemed this quest yet! Please redeem it before tiering up!")])
+                raise qc.errors.MildError("You haven't redeemed this quest yet! Please redeem it before tiering up!")
             elif progress.started:
-                await ctx.send(embeds=[discord.Embed(color=var.embedFail, title="Oops!", description="You haven't completed this quest yet! Please complete it and redeem it before tiering up!")])
+                raise qc.errors.MildError("You haven't completed this quest yet! Please complete it and redeem it before tiering up!")
             else:
-                await ctx.send(embeds=[discord.Embed(color=var.embedFail, title="Oops!", description="You haven't started this quest yet! Please start, complete and redeem the quest before tiering up!")])
-            
-
-
+                raise qc.errors.MildError("You haven't started this quest yet! Please start, complete and redeem the quest before tiering up!")

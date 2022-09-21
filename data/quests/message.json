@@ -1,11 +1,11 @@
 {
     "368071242189897728": {
-        "value": 0,
+        "value": 34,
         "progress": {
             "started": true,
             "finished": false,
             "redeemed": false
         },
-        "tier": 1
+        "tier": 2
     }
 }

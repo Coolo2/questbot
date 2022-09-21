@@ -1,8 +1,11 @@
+
 import os
+import discord
 
 address = "http://localhost:5000"
 
-allowed_guilds = [704596977576312842]
+allowed_guilds = [discord.Object(704596977576312842)]
+allowed_guilds_raw = [704596977576312842]
 
 commandsChannel = 704599391024971887
 

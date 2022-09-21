@@ -1,10 +1,13 @@
-import discord, random, aiohttp, json, os, time, datetime, asyncio, json, sys
+
+import discord
 from discord.ext import commands
+import json
 
-from resources import var
-from discord_components import *
+import QuestClient as qc
 
-async def leaderboard(bot, ctx):
+
+async def command(client : qc.Client, ctx : commands.Context):
+
     with open('data/values.json') as f:
         stats = json.load(f)
 
@@ -20,7 +23,8 @@ async def leaderboard(bot, ctx):
 
             finalString = finalString + f"\n**{counter}.** <@{item}> - {sort[item]['xp']:,d}"
 
-    button = Button(style=5, label="Full Leaderboard", url=var.address)
-    embed = discord.Embed(title="Quest XP Leaderboard", description=finalString, color=var.embed)
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label="Full Leaderboard", style=discord.ButtonStyle.url, url=qc.var.address))
+    embed = discord.Embed(title="Quest XP Leaderboard", description=finalString, color=qc.var.embed)
 
-    await ctx.send(embeds=[embed], components=[button])
+    await ctx.send(embed=embed, view=view)

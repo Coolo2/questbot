@@ -1,7 +1,8 @@
-import discord, random, aiohttp, json, os, time, datetime, asyncio, json, sys
+#from bot_commands.miniquests import miniquests
+import discord
 from discord.ext import commands
 
-from resources import var, questbot
+import QuestClient as qc
 
 def make_ordinal(n):
     n = int(n)
@@ -10,12 +11,13 @@ def make_ordinal(n):
         suffix = 'th'
     return str(n) + suffix
 
-async def balance(bot, ctx, user):
 
-    if user == None:
-        user = ctx.author 
+async def command(client : qc.Client, ctx : commands.Context, userO : discord.User = None):
+
+    if userO == None:
+        userO = ctx.author 
     
-    user = questbot.User(user)
+    user = qc.classes.User(userO)
     user.economy.loadBal(ctx.guild)
     user.zoo.refreshProducers()
     
@@ -24,14 +26,14 @@ async def balance(bot, ctx, user):
     embed = discord.Embed(
         title=f'{f"{user.user.name}{ap}s" if user != ctx.author else "Your"} balances', 
         description=f"Star leaderboard rank: {make_ordinal(user.economy.rank)}",
-        color=var.embed
+        color=qc.var.embed
     )
 
-    embed.add_field(name="Cash", value=f"{var.currency}{user.economy.cash:,d}")
-    embed.add_field(name="Bank", value=f"{var.currency}{user.economy.bank:,d}")
-    embed.add_field(name="Total", value=f"{var.currency}{user.economy.total:,d}")
+    embed.add_field(name="Cash", value=f"{qc.var.currency}{user.economy.cash:,d}")
+    embed.add_field(name="Bank", value=f"{qc.var.currency}{user.economy.bank:,d}")
+    embed.add_field(name="Total", value=f"{qc.var.currency}{user.economy.total:,d}")
 
     embed.add_field(name="Quest XP", value=f"{user.getXP():,d}")
     embed.add_field(name="Shards", value=f"{user.getShards():,d}")
 
-    await ctx.send(embeds=[embed])
+    await ctx.send(embed=embed)

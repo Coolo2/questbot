@@ -1,19 +1,19 @@
 {
     "368071242189897728": {
-        "vcs": [
-            "vc2",
-            "hi skellybone",
-            "h",
-            "This is the new dash lounge!",
-            "skellybone please come back",
-            "STOP"
-        ],
         "value": 6,
         "progress": {
             "started": true,
             "finished": true,
             "redeemed": true
         },
-        "tier": 1
+        "tier": 1,
+        "vcs": [
+            "STOP",
+            "skellybone please come back",
+            "This is the new dash lounge!",
+            "h",
+            "vc2",
+            "hi skellybone"
+        ]
     }
 }
