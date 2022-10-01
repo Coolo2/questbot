@@ -18,7 +18,7 @@ async def command(client : qc.Client, ctx : commands.Context, producer : str):
     
     user.zoo.getZoo()
     user.zoo.getShardProducers()
-    user.economy.loadBal(ctx.guild)
+    await user.economy.loadBal(ctx.guild)
 
     shardProducer = producer.replace(" ", "_").lower()
 
@@ -43,7 +43,7 @@ async def command(client : qc.Client, ctx : commands.Context, producer : str):
     producer.level += 1
     
     user.zoo.shardProducers[shardProducer] = producer.to_json()
-    user.economy.addBal(bank=0-cost)
+    await user.economy.addBal(bank=0-cost)
 
     user.zoo.saveShardProducers()
 

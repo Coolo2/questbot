@@ -7,6 +7,8 @@ from resources import var
 
 import QuestClient as qc
 
+from QuestClient.quests import money_maker
+
 class events(commands.Cog):
     def __init__(self, bot, client : qc.Client):
         self.bot = bot
@@ -23,6 +25,14 @@ class events(commands.Cog):
                 for quest in self.client.quest.quests + self.client.quest.miniquests:
                     if quest.name in quests:
                         await quest.validate(self.client, message)
+            
+            elif message.guild and message.guild.id in var.allowed_guilds_raw:
+                await money_maker.validate(self.client, message)
+        
+    @commands.Cog.listener()
+    async def on_message_edit(self, before : discord.Message, after : discord.Message):
+        if after.guild and after.guild.id in var.allowed_guilds_raw:
+            await money_maker.validate(self.client, after)
     
     @commands.Cog.listener() 
     async def on_voice_state_update(self, member : discord.Member, before : discord.VoiceState, after : discord.VoiceState):

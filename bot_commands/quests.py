@@ -1,4 +1,4 @@
-#from bot_commands.miniquests import miniquests
+
 import discord
 from discord.ext import commands
 
@@ -9,7 +9,7 @@ async def command(client : qc.Client, ctx : commands.Context, member : discord.M
     if member == None:
         member = ctx.author  
     
-    embed = discord.Embed(title="Here are {}'s quests".format(member.display_name), color=qc.var.embed)
+    embed = discord.Embed(title="Here are {}'s quests".format(member.display_name), description=f"`To see miniquests use {qc.var.prefix}miniquests`", color=qc.var.embed)
 
     for quest in client.quest.quests:
 
@@ -28,7 +28,5 @@ async def command(client : qc.Client, ctx : commands.Context, member : discord.M
             response = f"You havent started this quest{f' in tier {progress.tier}' if quest.tiers > 1 else ''} yet! Use **{qc.var.prefix}start {quest.name}**"
 
         embed.add_field(name=nameFormatted, value=response, inline=False)
-
-    embed.add_field(name="MiniQuests", value= f"`To see miniquests use {qc.var.prefix}miniquests`", inline=False)
     
     await ctx.send(embed=embed)

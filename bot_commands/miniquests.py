@@ -8,7 +8,7 @@ async def command(client : qc.Client, ctx : commands.Context, member : discord.M
     if member == None:
         member = ctx.author  
     
-    embed = discord.Embed(title="Here are {}'s miniquests".format(member.display_name), color=qc.var.embed)
+    embed = discord.Embed(title="Here are {}'s miniquests".format(member.display_name), description=f"`To see main quests use {qc.var.prefix}quests`", color=qc.var.embed)
 
     for quest in client.quest.miniquests:
 
@@ -27,6 +27,5 @@ async def command(client : qc.Client, ctx : commands.Context, member : discord.M
             response = f"You havent started this miniquest{f' in tier {progress.tier}' if quest.tiers > 1 else ''} yet! Use **{qc.var.prefix}start {quest.name}**"
 
         embed.add_field(name=nameFormatted, value=response, inline=False)
-    embed.add_field(name="Quests", value= f"`To see main quests use {qc.var.prefix}quests`", inline=False)
 
     await ctx.send(embed=embed)

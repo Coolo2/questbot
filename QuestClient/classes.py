@@ -1,9 +1,12 @@
 from __future__ import annotations
 import typing
 
+from discord.app_commands.commands import describe
+
 if typing.TYPE_CHECKING:
     from QuestClient.classes import Quest as QuestFr
     from QuestClient import Client as ClientFr
+    from QuestClient import classes as ClassesFr
 
 import re
 from discord.client import Coro
@@ -15,6 +18,8 @@ from datetime import datetime, timedelta
 import typing
 from discord import app_commands
 
+import re
+import aiohttp
 
 class Validator():
 
@@ -322,8 +327,32 @@ class Zoo():
     
 class Shop():
 
+    class Item():
+        def __init__(self, name : str, description : str, lasts: timedelta, cost : int):
+            self.name = name 
+            self.description = description 
+            self.cost = cost
+            self.lasts = lasts
+
+            self.active_since : datetime = None
+        
+        def to_dict(self) -> dict:
+            return {"name":self.name.lower().replace(" ", "_"), "active_since":self.active_since.timestamp()}
+
     def __init__(self):
         self.conversionRate = self.getConversionRate()
+
+        self.items = {
+            "mushroom":self.Item("Mushroom", "Gives you a small boost of stars for 48 hours", timedelta(hours=48), 500),
+            "fire_flower":self.Item("Fire Flower", "Inflames your next rob success and gives you double the stars", None, 500),
+            "double_cherry":self.Item("Double Cherry", "Doubles the reward for your next quest", None, 500),
+            "mask":self.Item("Mask", "Blocks all fines for one week", timedelta(days=7), 500),
+            "bubble":self.Item("Bubble", "Protects you from being robbed for one week", timedelta(days=7), 500),
+            "mega_mushroom":self.Item("Mega Mushroom", "Gives you a huge boost in stars for 72 hours", timedelta(hours=72), 500),
+            "thunder_cloud":self.Item("Thunder Cloud", "All crimes you recieve get sent to a random member instead of you for 48 hours", timedelta(hours=48), 500)
+        }
+    
+    
 
     def getConversionRate(self):
         date = datetime.today()
@@ -346,7 +375,6 @@ class Shop():
                 
         return final
 
-
 class User():
 
     class EconomyUser():
@@ -359,34 +387,39 @@ class User():
         def setGuild(self, guild):
             self.guild = guild
         
-        def loadBal(self, guild=None):
+        async def loadBal(self, guild=None):
             if guild != None:
                 self.setGuild(guild)
 
-            r = requests.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", headers=var.UBheaders)
-            data = r.json()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", headers=var.UBheaders) as r:
+                    data = await r.json()
 
-            self.rank = data["rank"]
+                    #r = requests.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", headers=var.UBheaders)
+                    #data = r.json()
 
-            self.cash = data["cash"]
-            self.bank = data["bank"]
+                    self.rank = data["rank"]
 
-            self.total = data["total"]
+                    self.cash = data["cash"]
+                    self.bank = data["bank"]
 
-            return self
+                    self.total = data["total"]
+
+                    return self
         
-        def addBal(self, cash = 0, bank = 0, guild=None):
+        async def addBal(self, cash = 0, bank = 0, guild=None):
             if guild != None:
                 self.setGuild(guild)
-            
-            r = requests.patch(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", data=json.dumps({"cash":cash, "bank":bank}), headers=var.UBheaders)
-            data = r.json()
 
-            self.cash = data["cash"]
-            self.bank = data["bank"]
-            self.total = data["total"]
+            async with aiohttp.ClientSession() as session:
+                async with session.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", data=json.dumps({"cash":cash, "bank":bank}), headers=var.UBheaders) as r:
+                    data = await r.json()
 
-            return self
+                    self.cash = data["cash"]
+                    self.bank = data["bank"]
+                    self.total = data["total"]
+
+                    return self
 
     class ZooUser():
 
@@ -507,6 +540,53 @@ class User():
 
             self.saveShardProducers()
             
+    class ItemUser():
+
+        def __init__(self, user : ClassesFr.User):
+
+            self.userClass = user
+            
+        @property 
+        def data_raw(self) -> typing.List[dict]:
+            with open("data/items.json") as f:
+                data = json.load(f)
+            
+            if str(self.userClass.user.id) in data:
+                return data[str(self.userClass.user.id)]
+            return []
+        
+        @property 
+        def items(self) -> typing.List[ClassesFr.Shop.Item]:
+
+            itms = []
+
+            for item in self.data_raw:
+                itm = Shop().items[item["name"]]
+                itm.active_since = datetime.fromtimestamp(item["active_since"])
+
+                itms.append(itm)
+            
+            return itms
+        
+        async def buy_item(self, user : ClassesFr.User, item : ClassesFr.Shop.Item) -> ClassesFr.Shop.Item:
+
+            with open("data/items.json") as f:
+                data = json.load(f)
+            
+            if str(user.user.id) not in data:
+                data[str(user.user.id)] = []
+            
+            item.active_since = datetime.now()
+
+            data[str(user.user.id)].append(item.to_dict())
+
+            with open("data/items.json", "w") as f:
+                json.dump(data, f, indent=4)
+            
+            await user.economy.addBal(bank=0-item.cost)
+
+            return item
+            
 
     
     def __init__(self, user : discord.User):
@@ -515,9 +595,11 @@ class User():
 
         self.zoo = self.ZooUser(self)
         self.economy = self.EconomyUser(self)
+        self.item = self.ItemUser(self)
 
         self.xp = self.getXP()
         self.shards = self.getShards()
+        
     
     def getXP(self):
         return self.getValue("xp")
@@ -748,3 +830,43 @@ class Quest:
 
         await user.send(embed=discord.Embed(color=var.embed, title=f"You completed the **{self.name.replace('_', ' ').title()}** quest!", 
             description=f"Use **{var.prefix}redeem {self.name}** in {guild.name} to claim your reward"), view=view)
+
+class EmbedReader():
+    def __init__(self, client : ClientFr, embed : discord.Embed):
+        self.client = client 
+        self.embed = embed 
+    
+    @property 
+    def user(self) -> discord.User:
+        author_name = self.embed.author.name
+
+        for user in self.client.bot.users:
+            if str(user) == author_name:
+                return user 
+
+        return None
+    
+    @property 
+    def was_success(self) -> bool:
+        if str(self.embed.color) == "#66bb6a":
+            return True 
+        return False
+    
+    @property 
+    def desc_mention(self) -> discord.User:
+        
+        open = self.embed.description.find("<@")
+        close = self.embed.description.find(">", self.embed.description.find(">") + 1)
+
+        str_id = self.embed.description[open+3: close]
+        
+
+        if str_id.isnumeric():
+
+            user = self.client.bot.get_user(int(str_id))
+            return user
+
+        return None
+
+
+

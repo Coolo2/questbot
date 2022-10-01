@@ -30,7 +30,7 @@ async def command(client : qc.Client, ctx : commands.Context, creature : str):
 
     sellPrice = creature.sellPrice
 
-    user.economy.addBal(bank=sellPrice, guild=ctx.guild)
+    await user.economy.addBal(bank=sellPrice, guild=ctx.guild)
 
     zoo = client.get_zoo()
     zoo.getTrades()

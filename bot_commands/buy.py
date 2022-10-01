@@ -10,6 +10,8 @@ from discord import app_commands
 from bot_commands import zoo_list
 from QuestClient.quests import creature as creatureQuest
 
+import datetime
+
 class CheckoutView(discord.ui.View):
 
     def __init__(self, client : qc.Client, user : qc.classes.User, shop : qc.classes.Shop, amount : int):
@@ -37,7 +39,7 @@ class CheckoutView(discord.ui.View):
             embed = discord.Embed(title="Uh oh!", description=f'You do not have enough money ({cost:,d}) **in bank** for this amount of quest xp!', color=qc.var.embedFail)
             return await interaction.response.edit_message(embed=embed)
 
-        self.user.economy.addBal(bank=0-cost)
+        await self.user.economy.addBal(bank=0-cost)
         self.user.addXP(self.amount)
 
         embed = discord.Embed(
@@ -93,7 +95,7 @@ async def crate(client : qc.Client, ctx : commands.Context, crate_type : str, co
                 while creature.name in user.zoo.creatures[str(ctx.author.id)]:
                     creature = crate.getCreature()
 
-    user.economy.loadBal(ctx.guild)
+    await user.economy.loadBal(ctx.guild)
 
     if user.economy.bank < crate.cost:
         embed = discord.Embed(title="Uh oh!", description=f'You do not have enough money ({crate.cost:,d}) **in bank** for this crate!', color=qc.var.embedFail)
@@ -101,7 +103,7 @@ async def crate(client : qc.Client, ctx : commands.Context, crate_type : str, co
 
     user.zoo.addCreature(creature.name)
     user.zoo.saveCreatures()
-    user.economy.addBal(bank=0-crate.cost)
+    await user.economy.addBal(bank=0-crate.cost)
     
     amount = user.zoo.creatures.count(creature.name)
 
@@ -125,7 +127,7 @@ async def quest_xp(client : qc.Client, ctx : commands.Context, amount : int):
 
     user = qc.classes.User(ctx.author)
     shop = qc.classes.Shop()
-    user.economy.loadBal(ctx.guild)
+    await user.economy.loadBal(ctx.guild)
     
     starsPerXP = shop.getConversionRate()
     cost = round(amount * starsPerXP)
@@ -139,3 +141,37 @@ async def quest_xp(client : qc.Client, ctx : commands.Context, amount : int):
     )
 
     await ctx.send(embed=embed, view=view)
+
+async def item(client : qc.Client, ctx : commands.Context, item : str):
+
+    item = item.lower().replace(" ", "_")
+
+    user = qc.classes.User(ctx.author)
+    shop = qc.classes.Shop()
+    await user.economy.loadBal(ctx.guild)
+
+    item : classes.Shop.Item = shop.items[item]
+
+    if user.economy.bank < item.cost:
+        raise qc.errors.MildError(f"You do not have enough money ({client.var.currency} {item.cost:,d}) **in your bank** to purchase this item.")
+
+    for i in user.item.items:
+        if i.name == item.name:
+            if i.lasts:
+                ends_at_relative = f"<t:{round((i.active_since + i.lasts).timestamp())}:f>"
+
+            raise qc.errors.MildError(f"You already have a {i.name} active. {f'Wait till this item runs out on {ends_at_relative}' if i.lasts else ''}")
+
+    new_item = await user.item.buy_item(user, item)
+    
+    desc = f"Successfully purchased a **{item.name}** for **{client.var.currency} {item.cost}**!"
+
+    if item.lasts:
+        ends_at_relative = f"<t:{round((item.active_since + new_item.lasts).timestamp())}:f>"
+        desc += f" This item will last until {ends_at_relative}"
+
+    embed = discord.Embed(title=f"Successfully bought {item.name}", description=desc, color=client.var.embedSuccess)
+    await ctx.send(embed=embed)
+    
+    
+    

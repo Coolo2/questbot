@@ -4,7 +4,8 @@ from discord.ext import commands
 
 import QuestClient as qc
 
-from bot_commands import zoo_list, zoo_shop, zoo_buy, zoo_sell, zoo_catalog, zoo_trade, zoo_merge, zoo_shardproducers, zoo_upgrade
+
+from bot_commands import buy, zoo_list, shop, zoo_sell, zoo_catalog, zoo_trade, zoo_merge, zoo_shardproducers, zoo_upgrade
 from bot_commands import balance, quests, miniquests, start, redeem, tier, leaderboard
 
 from discord import app_commands
@@ -49,9 +50,7 @@ class QuestCommandsCog(commands.Cog):
     @hybrid_group()
     async def zoo(self, ctx):
         pass
-    @zoo.group(name="buy", description="Buy something from the zoo shop")
-    async def zoo_buy(self, ctx):
-        pass 
+    
     @zoo.group(name="trade", description="Trade creatures with another person!")
     async def zoo_trade(self, ctx):
         pass 
@@ -66,11 +65,7 @@ class QuestCommandsCog(commands.Cog):
     @app_commands.choices(section=[app_commands.Choice(name=i, value=i) for i in ["golden", "shiny", "standard"]])
     async def _zoo_catalog(self, ctx : commands.Context, section : str, user : discord.User = None):
         await zoo_catalog.command(self.client, ctx, section, user)
-    
-    @zoo.command(name="shop", description="View today's zoo shop")
-    async def _zoo_shop(self, ctx : commands.Context):
-        await zoo_shop.command(self.client, ctx)
-    
+
     @zoo.command(name="merge", description="Merge creatures to make a shard producer!")
     @app_commands.autocomplete(creature=qc.autocompletes.mergeable_autocomplete)
     async def _zoo_merge(self, ctx : commands.Context, creature : str):
@@ -90,15 +85,6 @@ class QuestCommandsCog(commands.Cog):
     async def _zoo_sell(self, ctx : commands.Context, creature : str):
         await zoo_sell.command(self.client, ctx, creature)
     
-    @zoo_buy.command(name="crate", description="Buy a crate from the zoo shop")
-    @app_commands.choices(crate_type=[app_commands.Choice(name=i, value=i) for i in ["creature", "shiny", "collectors"]])
-    async def _zoo_buy_crate(self, ctx : commands.Context, crate_type : str):
-        await zoo_buy.crate(self.client, ctx, crate_type, self)
-    
-    @zoo_buy.command(name="quest_xp", description="Convert stars to Quest XP")
-    async def _zoo_buy_quest_xp(self, ctx : commands.Context, amount : app_commands.Range[int, 1]):
-        await zoo_buy.quest_xp(self.client, ctx, amount)
-    
     @zoo_trade.command(name="list", description="List ongoing trades")
     @app_commands.choices(bound=[app_commands.Choice(name="Inbound", value="inbound"), app_commands.Choice(name="Outbound", value="outbound")])
     async def _zoo_trade_list(self, ctx : commands.Context, bound : str, user : discord.User = None):
@@ -109,7 +95,39 @@ class QuestCommandsCog(commands.Cog):
     async def _zoo_trade_trade(self, ctx : commands.Context, user : discord.User, your_creature : str, their_creature : str):
         await zoo_trade.trade(self.client, ctx, user, your_creature, their_creature)
     
+    @hybrid_group()
+    async def shop(self, ctx):
+        pass
 
+    @shop.command(name="creatures", description="View the creature crate shop")
+    async def _shop_creature(self, ctx : commands.Context):
+        await shop.command_creature(self.client, ctx)
+    
+    @shop.command(name="items", description="View the item shop")
+    async def _shop_items(self, ctx : commands.Context):
+        await shop.command_items(self.client, ctx)
+    
+    @shop.command(name="quest_xp", description="View today's Quest XP shop")
+    async def _shop_quest_xp(self, ctx : commands.Context):
+        await shop.command_quest_xp(self.client, ctx)
+    
+    @hybrid_group()
+    async def buy(self, ctx):
+        pass 
+
+    @buy.command(name="crate", description="Buy a crate from the zoo shop")
+    @app_commands.choices(crate_type=[app_commands.Choice(name=i, value=i) for i in ["creature", "shiny", "collectors"]])
+    async def _buy_crate(self, ctx : commands.Context, crate_type : str):
+        await buy.crate(self.client, ctx, crate_type, self)
+    
+    @buy.command(name="item", description="Buy an item from the item shop")
+    @app_commands.choices(item=[app_commands.Choice(name=n.name, value=v) for v, n in qc.classes.Shop().items.items()])
+    async def _buy_item(self, ctx : commands.Context, item : str):
+        await buy.item(self.client, ctx, item)
+    
+    @buy.command(name="quest_xp", description="Convert stars to Quest XP")
+    async def _buy_quest_xp(self, ctx : commands.Context, amount : app_commands.Range[int, 1]):
+        await buy.quest_xp(self.client, ctx, amount)
 
         
 

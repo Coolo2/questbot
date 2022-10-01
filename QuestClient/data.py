@@ -34,7 +34,7 @@ class StarReward():
     
     async def redeem(self, user : qcFr.classes.User):
 
-        user.economy.addBal(bank=self.amount)
+        await user.economy.addBal(bank=self.amount)
 
 questXPLevels = [None,
     StarReward(8000),

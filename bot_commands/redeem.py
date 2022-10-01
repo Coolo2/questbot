@@ -28,7 +28,7 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
 
                 userClass = qc.classes.User(user)
                 economyUser = userClass.economy
-                economyUser.addBal(bank=reward.stars * multiplier, guild=ctx.guild)
+                await economyUser.addBal(bank=reward.stars * multiplier, guild=ctx.guild)
 
                 if reward.xp != 0:
                     userClass.addXP(reward.xp * multiplier)

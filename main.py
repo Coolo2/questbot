@@ -27,6 +27,8 @@ async def on_ready():
     print(bot.user.name + " Online")
 
     refreshData.start()
+
+    await client.initialise_ub()
     
     await bot.change_presence(activity=discord.Game(name=f"{var.prefix}help | Made for Dash's Lounge"))
 

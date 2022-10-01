@@ -15,6 +15,9 @@ embedSuccess = 0x00FF00
 
 prefix = "qt!"
 
+unb_prefix = "^"
+unb_id = 292953664492929025
+
 voiceChannels = 6
 
 completionEmoji = ":tada:"

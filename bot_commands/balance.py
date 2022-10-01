@@ -18,7 +18,7 @@ async def command(client : qc.Client, ctx : commands.Context, userO : discord.Us
         userO = ctx.author 
     
     user = qc.classes.User(userO)
-    user.economy.loadBal(ctx.guild)
+    await user.economy.loadBal(ctx.guild)
     user.zoo.refreshProducers()
     
     ap = "'"
