@@ -18,7 +18,7 @@ async def command(client : qc.Client, ctx : commands.Context, userO : discord.Us
     if userO == None:
         userO = ctx.author
     
-    user = qc.classes.User(userO)
+    user = qc.classes.User(client, userO)
     
     user.zoo.refreshProducers()
 

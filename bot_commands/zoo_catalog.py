@@ -9,7 +9,7 @@ async def command(client : qc.Client, ctx : commands.Context, section : str, use
     if userO == None:
         userO = ctx.author
 
-    user = qc.classes.User(userO)
+    user = qc.classes.User(client, userO)
     user.zoo.getZoo()
     
     ownedUsr = user.zoo.creatures

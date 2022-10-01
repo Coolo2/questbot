@@ -1,0 +1,292 @@
+
+@import url("https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800,900");
+@import url("https://fonts.googleapis.com/css?family=Nunito:200,300,400,500,600,700,800,900");
+
+:root {
+    --bold-color:#FFFFFF;
+    --general-color:#a0a0a0;
+    --background-color:#272934;
+    --background-highlight:#101216;
+
+    --primary:#5865F2;
+    --primary-darker:rgb(58, 66, 156, 0.7);
+    --success:#43B581;
+    --danger:#F04747;
+    --font-size:15px
+}
+
+.vertical-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.all-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.horizontal-center {
+    margin: 0;
+    position: absolute;
+    left: 50%;
+    -ms-transform: translate(-50%, 0);
+    transform: translate(-50%, 0);
+}
+
+body {
+    background-color:var(--background-color);
+    color:var(--bold-color);
+    font-family:Poppins;
+    margin:0;
+}
+
+#profile {
+    background-color:var(--background-highlight);
+    width:95%;
+    height:600px;
+    border-radius:15px;
+    margin-left:2.5%;
+    margin-top:2.5%;
+    position:relative;
+    overflow:auto;
+    box-shadow: 10px 10px 10px rgb(0, 0, 0, 0.4)
+}
+
+#background {
+    background-size:100%;
+    position:absolute;
+    width:100%;
+    height:calc(100% - 200px);
+    top:200px;
+    opacity:30%;
+    mix-blend-mode: multiply;
+}
+
+#profile-banner {
+    background-color:#5865F2;
+    width:100%;
+    height:200px;
+    border-radius: 10px 10px 0 0;
+    background-size:100% auto;
+    background-position-y: 30%;
+}
+
+#user {
+    position:absolute;
+    top:150px;
+    height:100px;
+    left:100px;
+    text-shadow: 5px 5px 5px black;
+    
+}
+
+#avatar {
+    height:100px;
+    border-radius:25px;
+    box-shadow: 5px 5px 5px black
+}
+
+#identity {
+    position:absolute;
+    left:125px;
+    transform: translateY(10px)
+}
+
+#name {
+    font-size:50px;
+    color:var(--bold-color);
+    
+}
+
+#discriminator {
+    font-size:25px;
+    color:var(--general-color);
+}
+
+.field-name {
+    color:var(--bold-color);
+    font-size:25px;
+    text-shadow: 5px 5px 5px black;
+    text-decoration: underline;
+    clear:both
+}
+.field-value {
+    color:var(--general-color);
+    font-size:25px;
+    text-shadow: 5px 5px 5px black;
+}
+
+.fields {
+    right:0;
+    position:absolute;
+    width:50%;
+    top:300px;
+}
+.bank-cash {
+    left:0;
+    top:0;
+    width:33.33%;
+    position: absolute;
+}
+.bank-bank {
+    left:33.33%;
+    top:0;
+    width:33.33%;
+    position: absolute;
+}
+.bank-total {
+    left:66.66%;
+    top:0;
+    width:33.33%;
+    position: absolute;
+}
+
+.quest_xp {
+    left:15%;
+    top:100px;
+    width:50%;
+    position: absolute;
+}
+.shards {
+    left:50%;
+    top:100px;
+    width:50%;
+    position: absolute;
+    
+}
+
+#currency {
+    height:25px;
+    margin-left:5px;
+    box-shadow: 5px 5px 5px rgb(0, 0, 0, 0.5);
+}
+
+.badges {
+    top:10px;
+    color:white;
+    text-shadow: 5px 5px 5px black;
+    position:absolute;
+    right:25px;
+    width:350px;
+    font-size:25px;
+    text-decoration: underline;
+}
+#badges {
+    position:absolute;
+    width:350px;
+    top:55px;
+    right:25px;
+    height:50px;
+}
+.badge {
+    width:50px;
+    height:50px;
+    margin-right:10px;
+    float:left;
+    background-color:red;
+    border-radius:5px;
+    color:white;
+    font-weight: bold;
+}
+
+#creatures {
+    position:absolute;
+    top:300px;
+    left:100px;
+}
+.creature {
+    margin-right:10px;
+}
+.creature-image {
+    height:50px;
+    width:50px;
+}
+
+#edit {
+    color:white;
+    font-size:50px;
+    position:absolute;
+    top:25px;
+    left:25px;
+    cursor:pointer
+}
+#edit:hover {
+    color:var(--general-color)
+}
+
+.edit-modal {
+    background-color:var(--background-color);
+    color:white;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding:30px;
+    width:75%;
+    height:75%;
+    position: relative;
+    border-radius:15px;
+    box-shadow: 10px 10px 10px rgb(0, 0, 0, 0.4)
+}
+
+.edit-picker-image-equipped {
+    height: 0;
+    padding-bottom: 10%;
+    width:10%;
+    border:3px solid green;
+    box-shadow: 5px 5px 5px rgb(0, 0, 0, 0.5);
+    float:left;
+    margin-right:15px;
+    background-size:450%;
+    cursor:pointer;
+    transition: all .5s;
+    margin-top:15px
+}
+.edit-picker-image-equipped:hover {
+    border:3px solid black;
+}
+
+.edit-picker-image {
+    height: 0;
+    padding-bottom: 10%;
+    width:10%;
+    border:3px solid green;
+    box-shadow: 5px 5px 5px rgb(0, 0, 0, 0.5);
+    float:left;
+    margin-right:15px;
+    background-size:450%;
+    mix-blend-mode: multiply;
+    cursor:pointer;
+    transition: all .5s;
+    margin-top:15px
+}
+.edit-picker-image:hover {
+    box-shadow: 10px 10px 10px rgb(0, 0, 0, 0.5);
+    scale:110%;
+    border:3px solid black;
+}
+
+.edit-picker-image-disabled {
+    height: 0;
+    padding-bottom: 10%;
+    width:10%;
+    border:3px solid red;
+    box-shadow: 5px 5px 5px rgb(255, 255, 255, 0.5);
+    float:left;
+    margin-right:15px;
+    background-size:450%;
+    filter:brightness(60%);
+    cursor:not-allowed;
+    margin-top:15px;
+    transition: all .5s;
+    mix-blend-mode: multiply;
+}
+.edit-picker-image-disabled:hover {
+    filter:none
+}
+

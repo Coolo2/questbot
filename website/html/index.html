@@ -26,7 +26,7 @@
 
 <body style="background-color:#23272A;margin:0;font-family: Helvetica, sans-serif;">
     <div id="topBar" style="z-index:100;position:absolute;background-color:#5865F2;height:100%;width:100%;transition:height 1.5s">
-        <img id="pfp" src="/images/pfp.png" style="position:absolute;border-radius:100px;height:75px;top:12.5%;left: 0px;box-shadow: #00000050 0 0 10px;"> 
+        <img id="pfp" src="/static/images/pfp.png" style="position:absolute;border-radius:100px;height:75px;top:12.5%;left: 0px;box-shadow: #00000050 0 0 10px;"> 
         <div id="pfpText" style="position:absolute;left:75px;font-size:50px;top:20px;color:white;font-weight:200;opacity:0;transition:opacity 1s, left 1s">
             <span style="text-shadow:0px 0px 10px #00000050">Quest Bot</span>
         </div>
@@ -55,19 +55,16 @@
     function sortObject(obj) {let entries = Object.entries(XPData);return entries.sort((a, b) => a[1] - b[1]).reverse();}
 
 
-    const XPData = {{XPData}}
+    window.onload = async function() {
 
-    
+        r = await fetch("/api/xp")
+        XPData = await r.json()
 
-    
-    
-
-    window.onload = function() {
         document.getElementById("topBar").style.height = "100px"
 
         generatePage()
 
-        setTimeout(function() {
+        setTimeout(async function() {
             document.getElementById("pfp").style.transition = "left 1s"
             document.getElementById("pfp").style.left = "10px"
 

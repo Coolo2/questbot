@@ -2,7 +2,9 @@
 import os
 import discord
 
-address = "http://localhost:5000"
+production = False
+
+address = "http://192.168.0.104:5000"
 
 allowed_guilds = [discord.Object(704596977576312842)]
 allowed_guilds_raw = [704596977576312842]
@@ -23,13 +25,17 @@ voiceChannels = 6
 completionEmoji = ":tada:"
 
 botID = 704282608120627250
+app_secret = os.getenv("secret")
 
 currency = "<:funny_potion:720925205102592021>"
 
-login = f"https://discord.com/api/oauth2/authorize?client_id={botID}&redirect_uri={address}/login&response_type=code&scope=identify&prompt=none"
+identify = f"https://discord.com/api/oauth2/authorize?client_id={botID}&permissions=8&redirect_uri={address}/return&response_type=code&scope=identify%20guilds"
 
 invite = f"https://discord.com/api/oauth2/authorize?client_id={botID}&permissions=0&redirect_uri={address}/invited&response_type=code&scope=bot%20applications.commands"
 
 UBversion = "v1"
 UBheaders = {"Authorization": os.getenv("UBtoken")}
 UBbase = f"https://unbelievaboat.com/api/{UBversion}"
+
+host = "0.0.0.0"
+port = 5000

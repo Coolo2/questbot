@@ -5,12 +5,12 @@ from discord.ext import commands, tasks
 import datetime
 
 from resources import var
-from website import backend
 import QuestClient
 
 from discord import app_commands
 
 from bot_commands import zoo_trade
+import website
 
 intents = discord.Intents.all()
 
@@ -29,6 +29,7 @@ async def on_ready():
     refreshData.start()
 
     await client.initialise_ub()
+    print(client.eco_totals)
     
     await bot.change_presence(activity=discord.Game(name=f"{var.prefix}help | Made for Dash's Lounge"))
 
@@ -53,9 +54,11 @@ async def setup_hook():
 
     await zoo_trade.load_views(client)
 
+    quart_app = await website.generate_app(bot, client)
+    bot.loop.create_task(quart_app.run_task(host=var.host, port=var.port, use_reloader=False))
+
 bot.setup_hook = setup_hook
 
-backend.webserver_run(bot)
 print("\n\n")
 
 bot.run(os.getenv("token"))

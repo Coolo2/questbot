@@ -6,7 +6,7 @@ import QuestClient as qc
 
 
 from bot_commands import buy, zoo_list, shop, zoo_sell, zoo_catalog, zoo_trade, zoo_merge, zoo_shardproducers, zoo_upgrade
-from bot_commands import balance, quests, miniquests, start, redeem, tier, leaderboard
+from bot_commands import balance, quests, miniquests, start, redeem, tier, leaderboard, items
 
 from discord import app_commands
 from discord.ext.commands.hybrid import hybrid_group
@@ -46,6 +46,10 @@ class QuestCommandsCog(commands.Cog):
     @commands.hybrid_command(name="leaderboard", description="Show the leaderboard for the server")
     async def _leaderboard(self, ctx : commands.Context):
         await leaderboard.command(self.client, ctx)
+    
+    @commands.hybrid_command(name="items", description="View your active items")
+    async def _items(self, ctx : commands.Context, user : discord.User = None):
+        await items.command(self.client, ctx, user)
     
     @hybrid_group()
     async def zoo(self, ctx):

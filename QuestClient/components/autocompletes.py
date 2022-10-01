@@ -24,7 +24,7 @@ async def owned_creature_autocomplete(interaction : discord.Interaction, current
     else:
         userO = interaction.user
 
-    user = qc.classes.User(userO)
+    user = qc.classes.User(interaction.client.client, userO)
     user.zoo.creatures
 
     return [
@@ -34,7 +34,7 @@ async def owned_creature_autocomplete(interaction : discord.Interaction, current
 
 async def mergeable_autocomplete(interaction : discord.Interaction, current : str):
 
-    user = qc.classes.User(interaction.user)
+    user = qc.classes.User(interaction.client.client, interaction.user)
     user.zoo.creatures
 
     return [
@@ -44,7 +44,7 @@ async def mergeable_autocomplete(interaction : discord.Interaction, current : st
 
 async def owned_shard_producers(interaction : discord.Interaction, current : str):
 
-    user = qc.classes.User(interaction.user)
+    user = qc.classes.User(interaction.client.client, interaction.user)
     user.zoo.getShardProducers()
 
     

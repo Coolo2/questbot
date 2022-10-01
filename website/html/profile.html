@@ -1,0 +1,70 @@
+<head>
+    <title>QB Profile</title>
+    <link href="/static/css/micromodal.css" rel="stylesheet">
+    <link href="/static/css/profile.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/balloon-css/balloon.min.css">
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    
+
+    <div id="profile">
+        <div id="profile-banner"></div>
+        <div class="badges">Badges:</div>
+        <div aria-label="Edit your profile" data-balloon-pos="right" id="edit"><i class="fa-solid fa-pencil"></i></div>
+        <div id="badges"></div>
+        <div id="background"></div>
+        <div id="user">
+            <div id="identity">
+                <span id="name"></span><span id="discriminator"></span>
+            </div>
+            <img id="avatar">
+        </div>
+        <div id="creatures"><div class="field-name" id="creatures-name">Creatures</div></div>
+
+        <div class="fields">
+            <div class="bank-cash">
+                <div class="field-name">Cash</div>
+                <span class="field-value" id="cash"></span>
+                <span><img id="currency"></span>
+            </div>
+            <div class="bank-bank">
+                <div class="field-name">Bank</div>
+                <span class="field-value" id="bank"></span>
+                <span><img id="currency"></span>
+            </div>
+            <div class="bank-total">
+                <div class="field-name">Total</div>
+                <span class="field-value" id="total"></span>
+                <span><img id="currency"></span>
+            </div>
+            <div class="quest_xp">
+                <div class="field-name">Quest XP</div>
+                <div class="field-value" id="quest_xp"></div>
+            </div>
+            <div class="shards">
+                <div class="field-name">Shards</div>
+                <div class="field-value" id="shards"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [1] -->
+    <div class="modal micromodal-slide" id="modal-1" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
+                <span class="modal__close" aria-label="Close modal" data-balloon-pos="right" data-micromodal-close><i class="fa-solid fa-xmark"></i></span>
+                <center><div class="field-name">Edit Profile</div></center>
+
+                <div class="field-name">Background Image</div>
+                <div id="edit-background-image"></div>
+                
+                <div class="field-name"><br>Banner Image</div>
+                <div id="edit-banner-image"></div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
+<script src="/static/js/profile.js"></script>

@@ -76,11 +76,20 @@ class Client():
         return classes.Zoo()
     
     async def initialise_ub(self):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(var.UBbase + f"/guilds/{var.allowed_guilds[0].id}/users", headers=var.UBheaders) as r:
-                data = await r.json()
+        guild = self.bot.get_guild(var.allowed_guilds[0].id)
 
-                for user in data:
-                    self.eco_totals[user["user_id"]] = user["total"]
+        for member in [m for m in guild.members if not m.bot]:
+            ub_member = classes.User(self, member)
+            await ub_member.economy.loadBal(guild)
+            self.eco_totals[str(member.id)] = ub_member.economy.total
+
+
+
+
+            #async with aiohttp.ClientSession() as session:
+            #    async with session.get(var.UBbase + f"/guilds/{var.allowed_guilds[0].id}/user/{member.id}", headers=var.UBheaders) as r:
+            #        data = await r.json()
+            #        for user in data:
+            #            self.eco_totals[user["user_id"]] = user["total"]
 
 

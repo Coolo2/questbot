@@ -14,7 +14,7 @@ standardUpgradeCosts = [None, 10_000, 15_000, 20_000, 25_000, 30_000]
 
 async def command(client : qc.Client, ctx : commands.Context, producer : str):
     
-    user = qc.classes.User(ctx.author)
+    user = qc.classes.User(client, ctx.author)
     
     user.zoo.getZoo()
     user.zoo.getShardProducers()

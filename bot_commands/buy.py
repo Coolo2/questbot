@@ -64,7 +64,7 @@ class CheckoutView(discord.ui.View):
 
 async def crate(client : qc.Client, ctx : commands.Context, crate_type : str, cog):
 
-    user = qc.classes.User(ctx.author)
+    user = qc.classes.User(client, ctx.author)
     user.zoo.getZoo()
 
     if crate_type == None:
@@ -125,7 +125,7 @@ async def crate(client : qc.Client, ctx : commands.Context, crate_type : str, co
 
 async def quest_xp(client : qc.Client, ctx : commands.Context, amount : int):
 
-    user = qc.classes.User(ctx.author)
+    user = qc.classes.User(client, ctx.author)
     shop = qc.classes.Shop()
     await user.economy.loadBal(ctx.guild)
     
@@ -146,14 +146,18 @@ async def item(client : qc.Client, ctx : commands.Context, item : str):
 
     item = item.lower().replace(" ", "_")
 
-    user = qc.classes.User(ctx.author)
+    user = qc.classes.User(client, ctx.author)
     shop = qc.classes.Shop()
-    await user.economy.loadBal(ctx.guild)
+    
+    user.zoo.refreshProducers()
+    shards : int = user.getShards()
+
+    user.item.refresh_items()
 
     item : classes.Shop.Item = shop.items[item]
 
-    if user.economy.bank < item.cost:
-        raise qc.errors.MildError(f"You do not have enough money ({client.var.currency} {item.cost:,d}) **in your bank** to purchase this item.")
+    if shards < item.cost:
+        raise qc.errors.MildError(f"You do not have enough shards ({item.cost:,d}) **in your bank** to purchase this item.")
 
     for i in user.item.items:
         if i.name == item.name:
@@ -162,9 +166,9 @@ async def item(client : qc.Client, ctx : commands.Context, item : str):
 
             raise qc.errors.MildError(f"You already have a {i.name} active. {f'Wait till this item runs out on {ends_at_relative}' if i.lasts else ''}")
 
-    new_item = await user.item.buy_item(user, item)
+    new_item = user.item.buy_item(item)
     
-    desc = f"Successfully purchased a **{item.name}** for **{client.var.currency} {item.cost}**!"
+    desc = f"Successfully purchased a **{item.name}** for **{item.cost} Shards**!"
 
     if item.lasts:
         ends_at_relative = f"<t:{round((item.active_since + new_item.lasts).timestamp())}:f>"

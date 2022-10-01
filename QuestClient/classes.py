@@ -21,6 +21,27 @@ from discord import app_commands
 import re
 import aiohttp
 
+class Badge():
+    def __init__(self, name : str, description : str, cost : int = None, quest : str = None):
+        self.name = name 
+        self.description = description
+        self.cost = cost 
+        self.quest = quest
+
+badges = {
+    "messenger":Badge("Messenger", "Complete tier 6 of message quest", quest="message"),
+    "pixel":Badge("Pixel", "Complete tier 6 of pixel quest", quest="pixel"),
+    "item":Badge("Item", "Complete tier 6 of item quest", quest="item"),
+    "count":Badge("Count", "Complete tier 6 of count quest", quest="count"),
+    "star":Badge("Star", "Complete tier 6 of money maker quest", quest="money_maker"),
+    "creature":Badge("Creature", "Complete tier 6 of creature quest", quest="creature"),
+    "shard":Badge("shard", "Complete tier 6 of shard quest", quest="shard"),
+    "voice":Badge("Voice", "Complete tier 6 of voice quest", quest="voice"),
+    "hoarder":Badge("Hoarder", "Complete tier 6 of hoarder quest", quest="hoarder"),
+    "quest":Badge("Quest", "Complete tier 6 of quest quest", quest="quest"),
+    "miniature":Badge("Miniature", "Complete all mini quests")
+}
+
 class Validator():
 
     def __init__(self, valid, message=""):
@@ -329,7 +350,9 @@ class Shop():
 
     class Item():
         def __init__(self, name : str, description : str, lasts: timedelta, cost : int):
+            # Cost is in shards
             self.name = name 
+            self.raw_name = name.lower().replace(" ", "_")
             self.description = description 
             self.cost = cost
             self.lasts = lasts
@@ -343,13 +366,13 @@ class Shop():
         self.conversionRate = self.getConversionRate()
 
         self.items = {
-            "mushroom":self.Item("Mushroom", "Gives you a small boost of stars for 48 hours", timedelta(hours=48), 500),
-            "fire_flower":self.Item("Fire Flower", "Inflames your next rob success and gives you double the stars", None, 500),
-            "double_cherry":self.Item("Double Cherry", "Doubles the reward for your next quest", None, 500),
-            "mask":self.Item("Mask", "Blocks all fines for one week", timedelta(days=7), 500),
-            "bubble":self.Item("Bubble", "Protects you from being robbed for one week", timedelta(days=7), 500),
-            "mega_mushroom":self.Item("Mega Mushroom", "Gives you a huge boost in stars for 72 hours", timedelta(hours=72), 500),
-            "thunder_cloud":self.Item("Thunder Cloud", "All crimes you recieve get sent to a random member instead of you for 48 hours", timedelta(hours=48), 500)
+            "mushroom":self.Item("Mushroom", "Gives you a small boost of stars for 48 hours", timedelta(hours=48), 3),
+            "fire_flower":self.Item("Fire Flower", "Inflames your next rob success and gives you double the stars", None, 4),
+            "double_cherry":self.Item("Double Cherry", "Doubles the reward for your next quest", None, 7),
+            "mask":self.Item("Mask", "Blocks all fines for one week", timedelta(days=7), 10),
+            "bubble":self.Item("Bubble", "Protects you from being robbed for one week", timedelta(days=7), 10),
+            "mega_mushroom":self.Item("Mega Mushroom", "Gives you a huge boost in stars for 72 hours", timedelta(hours=72), 25),
+            "thunder_cloud":self.Item("Thunder Cloud", "All crimes you recieve get sent to a random member instead of you for 48 hours", timedelta(hours=48), 20)
         }
     
     
@@ -398,12 +421,12 @@ class User():
                     #r = requests.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", headers=var.UBheaders)
                     #data = r.json()
 
-                    self.rank = data["rank"]
+                    self.rank = data["rank"] if "rank" in data else None
 
-                    self.cash = data["cash"]
-                    self.bank = data["bank"]
+                    self.cash = data["cash"] if "cash" in data else 0
+                    self.bank = data["bank"] if "bank" in data else 0
 
-                    self.total = data["total"]
+                    self.total = data["total"] if "total" in data else 0
 
                     return self
         
@@ -412,8 +435,9 @@ class User():
                 self.setGuild(guild)
 
             async with aiohttp.ClientSession() as session:
-                async with session.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", data=json.dumps({"cash":cash, "bank":bank}), headers=var.UBheaders) as r:
+                async with session.patch(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", data=json.dumps({"cash":cash, "bank":bank}), headers=var.UBheaders) as r:
                     data = await r.json()
+                    print(data)
 
                     self.cash = data["cash"]
                     self.bank = data["bank"]
@@ -544,15 +568,15 @@ class User():
 
         def __init__(self, user : ClassesFr.User):
 
-            self.userClass = user
+            self.user = user
             
         @property 
         def data_raw(self) -> typing.List[dict]:
             with open("data/items.json") as f:
                 data = json.load(f)
             
-            if str(self.userClass.user.id) in data:
-                return data[str(self.userClass.user.id)]
+            if str(self.user.user.id) in data:
+                return data[str(self.user.user.id)]
             return []
         
         @property 
@@ -568,47 +592,148 @@ class User():
             
             return itms
         
-        async def buy_item(self, user : ClassesFr.User, item : ClassesFr.Shop.Item) -> ClassesFr.Shop.Item:
+        def buy_item(self, item : ClassesFr.Shop.Item) -> ClassesFr.Shop.Item:
 
             with open("data/items.json") as f:
                 data = json.load(f)
             
-            if str(user.user.id) not in data:
-                data[str(user.user.id)] = []
+            if str(self.user.user.id) not in data:
+                data[str(self.user.user.id)] = []
             
             item.active_since = datetime.now()
 
-            data[str(user.user.id)].append(item.to_dict())
+            data[str(self.user.user.id)].append(item.to_dict())
 
             with open("data/items.json", "w") as f:
                 json.dump(data, f, indent=4)
             
-            await user.economy.addBal(bank=0-item.cost)
+            self.user.addShards(0-item.cost)
 
             return item
-            
+        
+        def has_item(self, item : ClassesFr.Shop.Item = None, name : str = None) -> bool:
 
+            if item:
+                return item.name in [i.name for i in self.items]
+            else:
+                return name in [i.raw_name for i in self.items]
+        
+        def remove_item(self, item_name : str = None, item_raw = None):
+
+            with open("data/items.json") as f:
+                data : dict = json.load(f)
+            
+            if str(self.user.user.id) not in data:
+                data[str(self.user.user.id)] = []
+            
+            to_remove : typing.List[dict] = []
+            for i in data[str(self.user.user.id)]:
+                if i["name"] == item_name or i == item_raw:
+                    to_remove.append(i)
+            
+            for r in to_remove:
+                data[str(self.user.user.id)].remove(r)
+
+            
+            with open("data/items.json", "w") as f:
+                json.dump(data, f, indent=4)
+        
+        def refresh_items(self):
+            items = self.items 
+
+            remove_timestamps : typing.List[float] = []
+            for item in items:
+                if item.lasts:
+                    ends_at = (item.active_since + item.lasts)
+
+                    if ends_at.timestamp() < datetime.now().timestamp():
+                        remove_timestamps.append(item.active_since.timestamp())
+            
+            if remove_timestamps != []:
+                to_remove : typing.List[dict] = []
+                for item in self.data_raw:
+                    for i in remove_timestamps:
+                        if int(item["active_since"]) == int(i):
+                            to_remove.append(item)
+                
+                for r in to_remove:
+                    self.remove_item(item_raw=r)
     
-    def __init__(self, user : discord.User):
+    class BadgeUser():
+        def __init__(self, user : ClassesFr.User):
+            self.user = user
+        
+        @property
+        async def badges(self):
+            with open("data/badges.json") as f:
+                data = json.load(f)
+            
+            if str(self.user.user.id) not in data:
+                data[str(self.user.user.id)] = {}
+            
+            badge_list : typing.List[Badge] = []
+            
+            for quest in self.user.client.quest.quests:
+                progress = quest.getProgress(self.user.user)
+                if progress.tier == 6 and progress.finished:
+                    for name, badge in badges.items():
+                        if badge.quest == quest.name:
+                            badge_list.append(badge)
+            
+            with open("data/badges.json", "w") as f:
+                json.dump(data, f, indent=4)
+            
+            return badge_list
+
+    class ProfileUser():
+        def __init__(self, user : ClassesFr.User):
+            self.user = user
+        
+        @property
+        def profile_art(self) -> typing.Dict[str, ClassesFr.Art]:
+            with open("data/profile.json") as f:
+                data = json.load(f)
+            
+            if str(self.user.user.id) not in data:
+                data[str(self.user.user.id)] = {}
+            
+            if "art" not in data[str(self.user.user.id)]:
+                data[str(self.user.user.id)]["art"] = {}
+            
+            resp = {}
+            
+            for art_name, owned_type in data[str(self.user.user.id)]["art"].items():
+                art = Web(self.user.client).profile_art[art_name]
+                if owned_type == "equipped":
+                    art.equipped = True
+
+                resp[art_name] = art
+            
+            return resp
+
+    def __init__(self, client : ClientFr, user : discord.User):
         
         self.user = user
+        self.client = client
 
         self.zoo = self.ZooUser(self)
         self.economy = self.EconomyUser(self)
         self.item = self.ItemUser(self)
+        self.badge = self.BadgeUser(self)
+        self.profile = self.ProfileUser(self)
 
         self.xp = self.getXP()
         self.shards = self.getShards()
         
     
-    def getXP(self):
+    def getXP(self) -> int:
         return self.getValue("xp")
-    def addXP(self, amount):
+    def addXP(self, amount) -> int:
         return self.setValue("xp", amount)
     
-    def getShards(self):
+    def getShards(self) -> int:
         return self.getValue("shards")
-    def addShards(self, amount):
+    def addShards(self, amount) -> int:
         return self.setValue("shards", amount)
 
     def getValue(self, type):
@@ -867,6 +992,29 @@ class EmbedReader():
             return user
 
         return None
+    
+    def description_members(self, guild : discord.Guild) -> typing.List[discord.Member]:
+        result = []
+        for member in guild.members:
+            if str(member) in self.embed.description:
+                result.append(member)
+        
+        return result
 
+class Art():
+    def __init__(self, name : str, file : str):
+        self.name = name 
+        self.file = file
 
+        self.equipped : bool = False
 
+class Web():
+    def __init__(self, client : ClientFr):
+        self.client = client 
+
+        self.profile_art : typing.Dict[str, Art] = {
+            "background_2":Art("Geometry Dash Background", "background_2.png"),
+            "background_3":Art("Dash background", "background_3.png"),
+            "banner_2":Art("Geometry Dash Banner", "banner_2.png"),
+            "banner_3":Art("Dash banner", "banner_3.png")
+        }

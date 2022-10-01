@@ -17,7 +17,7 @@ async def command(client : qc.Client, ctx : commands.Context, userO : discord.Us
     if userO == None:
         userO = ctx.author 
     
-    user = qc.classes.User(userO)
+    user = qc.classes.User(client, userO)
     await user.economy.loadBal(ctx.guild)
     user.zoo.refreshProducers()
     

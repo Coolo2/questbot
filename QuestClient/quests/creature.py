@@ -13,7 +13,7 @@ from QuestClient import classes
 
 async def check(client : ClFr, user : discord.Member):
 
-    clUser = classes.User(user)
+    clUser = classes.User(client, user)
     
 
     counts = quest.setValue(user, len(clUser.zoo.creatures))

@@ -12,7 +12,7 @@ import datetime
 
 async def command(client : qc.Client, ctx : commands.Context, creature : str):
 
-    user = qc.classes.User(ctx.author)
+    user = qc.classes.User(client, ctx.author)
     
     user.zoo.creatures
     user.zoo.getZoo()

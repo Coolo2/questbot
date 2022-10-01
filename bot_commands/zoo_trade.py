@@ -107,8 +107,8 @@ async def trade(client : qc.Client, ctx : commands.Context, user : discord.User,
     allData = zoo.creatures
 
 
-    author = qc.classes.User(ctx.author)
-    otherUser = qc.classes.User(user)
+    author = qc.classes.User(client, ctx.author)
+    otherUser = qc.classes.User(client, user)
 
     if user == ctx.author:
         raise qc.errors.MildError("> You can't trade with yourself!")

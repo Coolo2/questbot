@@ -20,13 +20,17 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
                 embed = discord.Embed(title="Oops!", description=f"You have already redeemed the {quest.name} quest tier {progress.tier}! To tier up use **{qc.var.prefix}tier {quest.name}**", color=qc.var.embedFail)
             elif progress.started and progress.finished:
                 
-                multiplier = await client.quest.useMultiplier(user)
+                #multiplier = await client.quest.useMultiplier(user)
+                userClass = qc.classes.User(client, user)
+                multiplier = 1
+                if userClass.item.has_item(name="double_cherry"):
+                    multiplier = 2
+                    userClass.item.remove_item("double_cherry")
 
                 quest.setProgress(user, [True, True, True])
 
                 reward = quest.reward[progress.tier]
 
-                userClass = qc.classes.User(user)
                 economyUser = userClass.economy
                 await economyUser.addBal(bank=reward.stars * multiplier, guild=ctx.guild)
 
@@ -35,7 +39,7 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
                 
                 embed = discord.Embed(
                     title=f"You redeemed {quest.name.replace('_', ' ').title()}!", 
-                    description=f"You redeemed this quest, which gave you {f'**{reward.stars}** stars' if reward.stars != 0 else ''}{' and ' if reward.stars != 0 and reward.xp != 0 else ''}{f'**{reward.xp}** Quest XP' if reward.xp != 0 else ''}! {f'Use **{qc.var.prefix}tier {quest.name}** to tier up!' if quest.tiers > 1 and progress.tier < quest.tiers else ''}",
+                    description=f"You redeemed this quest, which gave you {f'**{reward.stars*multiplier:,d}** stars' if reward.stars != 0 else ''}{' and ' if reward.stars != 0 and reward.xp != 0 else ''}{f'**{reward.xp*multiplier:,d}** Quest XP' if reward.xp != 0 else ''}! {f'Use **{qc.var.prefix}tier {quest.name}** to tier up!' if quest.tiers > 1 and progress.tier < quest.tiers else ''}",
                     color=qc.var.embedSuccess
                 )
                 

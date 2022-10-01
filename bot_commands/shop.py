@@ -48,8 +48,8 @@ def getItemShopEmbed(client : qc.Client):
         color=var.embed
     )
 
-    for name, item in shop.items.items():
-        shopEmbed.add_field(name=f"{item.name} ({client.var.currency} {item.cost:,d})", value=item.description, inline=False)
+    for item in shop.items.values():
+        shopEmbed.add_field(name=f"{item.name} ({item.cost:,d} Shards)", value=item.description, inline=False)
 
     return shopEmbed
 
