@@ -1,41 +1,91 @@
 String.prototype.toProperCase = function () {
     return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 };
+async function request(method, url, data) {
+    var settings = {
+        method: method,
+        headers: {
+            "Content-Type":"application/json"
+        }
+    };
+    if (data) {
+        settings.body = JSON.stringify(data)
+    }
+    response = await fetch(url, settings)
+    return await response.json()
+}
 
 profile_data = {}
 
-async function load() {
+emojis = undefined
+creatures = undefined
+var usr;
 
-    r = await fetch(`/api/emojis`)
-    emojis = await r.json()
+if (location.search.includes("instant")) {
+    //document.body.style.backgroundColor = "#36393F"
+    document.body.style.backgroundColor = "rgb(0, 0, 0, 0)"
+    document.getElementById("profile").style.transition = "all 0s"
+    document.getElementById("profile").style.opacity = 1
+    document.getElementById("profile").style.marginTop = "10px"
+    document.getElementById("edit").style.display = "none"
+    document.getElementById("profile").style.height = "500px";
+    document.getElementById("profile").style.overflowY = "hidden"
+    document.getElementById("profile-user").style.top = "100px"
+    document.getElementsByClassName("background-container")[0].style.top = "125px"
+    document.getElementsByClassName("background-container")[0].style.height = "calc(100% - 125px)"
 
-    r = await fetch(`/api/creatures`)
-    creatures = await r.json()
+    document.querySelectorAll("field-name").forEach(el => {
+        el.style.fontSize = "50px;"
+    })
+}
 
-    r = await fetch(`/api/profile/${location.pathname.split("/")[2]}`)
-    data = await r.json()
-    profile_data = data
+async function load(pDataPre) {
+    if (!usr) {
+        r = await fetch("/api/user")
+        usr = await r.json()
+    }
+    if (!usr.error) {
+        document.getElementById("user-name").innerText = `${usr.username}#${usr.discriminator}: `
+        document.getElementById("user-avatar").src = `https://cdn.discordapp.com/avatars/${usr.id}/${usr.avatar}.webp?size=96`
+        setTimeout(function() {
+            document.getElementById("user").style.opacity = 1;
+            document.getElementById("user-logout").onclick = async function() {window.open(`/logout?to=${location.pathname.replace('edit', '')}`, "_self")}
+        }, 1000)
+    }
+    
+    if (!pDataPre) {
+        r = await fetch(`/api/profile/${location.pathname.split("/")[2]}`)
+        data = await r.json()
+        profile_data = data
+    } else {
+        data = pDataPre
+    }
+
+    if (!usr.error && usr.id != data.user.id) {
+        document.getElementById("edit").style.display = "none"
+    }
+    
 
     document.getElementById("creatures-name").innerText = `Creatures (${data.creatures.length})`
 
     counter = 0
+    document.getElementById("creatures").innerHTML = ""
     for (creature of data.creatures.slice(0, 10)) {
-        emoji = creatures[creature].emoji
 
-        if (!emoji.includes("<")) {
-            src = `https://twemoji.maxcdn.com/v/14.0.2/72x72/${twemoji.convert.toCodePoint(emojis[emoji.split(":").join("")])}.png`
+        if (creature.unicode) {
+            src = `https://twemoji.maxcdn.com/v/14.0.2/72x72/${twemoji.convert.toCodePoint(creature.unicode)}.png`
         } else {
-            src = `https://cdn.discordapp.com/emojis/${emoji.split(':')[2].replace('>', '')}.png?size=48&quality=lossless`
+            src = `https://cdn.discordapp.com/emojis/${creature.emoji.split(':')[2].replace('>', '')}.png?size=48&quality=lossless`
         }
 
         if (counter % 5 == 0) {
             document.getElementById("creatures").innerHTML += "<br>"
         }
         counter += 1
-        document.getElementById("creatures").innerHTML += `<span aria-label="${creature.split('_').join(' ').toProperCase()}" data-balloon-pos="down" class="creature"><img class="creature-image" src=${src}></span>`
+        document.getElementById("creatures").innerHTML += `<span aria-label="${creature.name.toProperCase()}" data-balloon-pos="down" class="creature"><img class="creature-image" src=${src}></span>`
     }
     if (data.creatures.length > 10) {
-        document.getElementById("creatures").innerHTML += "...And more!"
+        document.getElementById("creatures").innerHTML += `...And ${data.creatures.length - 10} more!`
     }
 
     document.getElementById("avatar").src = data.user.avatar_url
@@ -51,41 +101,102 @@ async function load() {
     for (el of document.querySelectorAll("#currency")) {
         el.src = data.currency
     }
-
-    // badges
-    for (badge of data.badges) {
-        document.getElementById("badges").innerHTML += `<div class="badge hex" aria-label="${badge.description}" data-balloon-pos="down"><div class="all-center">${badge.name.substring(0, 1)}</div></div>`
+    for (el of document.querySelectorAll("#quest_xp_currency")) {
+        el.src = data.quest_xp_currency
+    }
+    for (el of document.querySelectorAll("#shards_currency")) {
+        el.src = data.shards_currency
     }
 
+    // badges
+    document.getElementById("badges").innerHTML = ""
+    document.getElementById("edit-pinned-badges").innerHTML = ""
+    badges_added = 0
+    for (pinned_badge of data.pinned_badges) {
+        for (badge of data.badges) {
+            if (badge.raw_name == pinned_badge) {
+                fr = fromNameLength(badge.name)
+
+                badges_added += 1
+                if (badge.image) {
+                    badgeReplaced = `<span class="badge-image" data-balloon-length="medium" aria-label="${badge.name}: ${badge.description}" data-balloon-pos="down"><img class="badge-image-image" src="/static/images/badges/${badge.image}"></span>`
+                } else {
+                    badgeReplaced = `<div class="badge" data-balloon-length="medium" style="${fr.style}" aria-label="${badge.name}: ${badge.description}" data-balloon-pos="down"><div class="all-center">${badge.name.substring(0, 1)}</div></div>`
+                }
+                document.getElementById("badges").innerHTML += badgeReplaced
+            }
+        }
+    }
+    for (badge of data.badges) {
+        fr = fromNameLength(badge.name)
+        ispinned = ""
+        if (data.pinned_badges.includes(badge.raw_name)) {
+            ispinned = "edit-pinned-badge-ispinned"
+        }
+
+        if (badge.image) {
+            badgeReplaced = `<span class="badge-image" data-balloon-length="medium" aria-label="${badge.name}: ${badge.description}" data-balloon-pos="down"><img class="badge-image-image" src="/static/images/badges/${badge.image}"></span>`
+            editBadge = `<img src="/static/images/badges/${badge.image}" class="edit-pinned-badge-inner">`
+        } else {
+            badgeReplaced = `<div style="${fr.style}" class="badge" aria-label="${badge.name}: ${badge.description}" data-balloon-pos="down"><div class="all-center">${badge.name.substring(0, 1)}</div></div>`
+            editBadge = `<div style="${fr.style}" class="badge edit-pinned-badge-inner"><div class="all-center">${badge.name.substring(0, 1)}</div></div>`
+        }
+
+        document.getElementById("edit-pinned-badges").innerHTML += `<div class="edit-pinned-badge ${ispinned}" onclick="togglePinnedBadge('${badge.raw_name}')" 
+            data-balloon-length="medium" aria-label="${badge.name}: ${badge.description}" data-balloon-pos="up">${editBadge}</div>`
+        if (badges_added < 5 && !data.pinned_badges.includes(badge.raw_name)) {
+            document.getElementById("badges").innerHTML += badgeReplaced
+            badges_added += 1
+        }
+        
+        
+    }
+
+    document.getElementById("edit-background-image").innerHTML = ""
+    document.getElementById("edit-banner-image").innerHTML = ""
+    document.getElementById("profile-banner").style.backgroundImage = ``
+    document.getElementById("background").style.backgroundImage = ``
+    document.getElementById("profile-banner").style.backgroundColor = data.color 
+    document.getElementById("edit-banner-color").value = data.color
     for (art of data.profile_art) {
         if (art.file.includes("background")) {
             disabled = "-disabled"
+            csr = "cursor:not-allowed;"
             if (art.owned) {
                 disabled = ""
+                csr = ""
             }
             if (art.equipped) {
                 disabled = "-equipped"
                 document.getElementById("background").style.backgroundImage = `url(/static/images/profile/${art.file})`
             }
-            document.getElementById("edit-background-image").innerHTML += `<div class="edit-picker-image${disabled}" style="background-image:url(/static/images/profile/${art.file})"></div>`
+            document.getElementById("edit-background-image").innerHTML += `<span data-balloon-length="fit" aria-label="${art.name}: ${art.unlock}" onclick="toggleArt('${art.raw_name}')"
+                data-balloon-pos="up" class="edit-picker-container${disabled}"><div class="edit-picker-image${disabled}" style="${csr}background-image:url(/static/images/profile/${art.file})"></div></span>`
         }
         if (art.file.includes("banner")) {
             disabled = "-disabled"
+            csr = "cursor:not-allowed;"
             if (art.owned) {
                 disabled = ""
+                csr = ""
             }
             if (art.equipped) {
                 disabled = "-equipped"
                 document.getElementById("profile-banner").style.backgroundImage = `url(/static/images/profile/${art.file})`
             }
-            document.getElementById("edit-banner-image").innerHTML += `<div class="edit-picker-image${disabled}" style="background-image:url(/static/images/profile/${art.file})"></div>`
+            document.getElementById("edit-banner-image").innerHTML += `<span aria-label="${art.name}: ${art.unlock}" class="edit-picker-container${disabled}" onclick="toggleArt('${art.raw_name}')"
+            data-balloon-length="fit" data-balloon-pos="down"><div class="edit-picker-image${disabled}" style="${csr}background-image:url(/static/images/profile/${art.file})"></div></span>`
         }
     }
 
     document.getElementById("edit").onclick = edit
-    console.log(location.pathname)
     if (location.pathname.includes("edit")) {
         edit()
+    }
+
+    if (!location.search.includes("instant")) {
+        document.getElementById("profile").style.opacity = 1
+        document.getElementById("profile").style.marginTop = "100px"
     }
 
 }
@@ -102,15 +213,92 @@ MicroModal.init({
     debugMode: true // [8]
 });
 
+async function toggleArt(art_name) {
+    d = {}
+
+    for (art of profile_data.profile_art) {
+        if (art_name.includes("background") && art.raw_name.includes("background")) {
+            d[art.raw_name] = "owned"
+        }
+        if (art_name.includes("banner") && art.raw_name.includes("banner")) {
+            d[art.raw_name] = "owned"
+        }
+        
+    }
+
+    for (art of profile_data.profile_art) {
+        if (art.raw_name == art_name && art.owned) {
+            
+            if (art.equipped) {
+                d[art.raw_name] = "owned"
+            } else {
+                d[art.raw_name] = "equipped"
+            }
+            
+        }
+    }
+
+    profile_data = await request("POST", "/api/profile/art", d)
+    await load(profile_data)
+}
+
+async function togglePinnedBadge(badge_name) {
+    b = profile_data.pinned_badges 
+
+    if (b.includes(badge_name)) {
+        b.splice(b.indexOf(badge_name), 1);
+    } else {
+        b.push(badge_name)
+        if (b.length > 5) {b.shift()}
+    }
+
+    
+
+    profile_data = await request("POST", "/api/profile/pinned_badges", b)
+    await load(profile_data)
+}
+
 async function edit() {
-    r = await fetch("/api/user")
-    usr = await r.json()
+    if (!usr) {
+        r = await fetch("/api/user")
+        usr = await r.json()
+    }
 
     if (usr.error) {
         return window.open(`/login?to=/profile/${profile_data.user.id}/edit`, "_self")
     }
 
-    MicroModal.show('modal-1'); // [1]
-   // MicroModal.close('modal-id'); // [2]
+    if (usr.id == profile_data.user.id) {
+        MicroModal.show('modal-1');
+    }
+
+    window.history.pushState("", "", location.href.replace("edit", ""))
+}
+
+
+var timer;
+document.getElementById("edit-banner-color").oninput = async function(e) {
+    val = e.target.value 
+    
+    if (timer) {clearTimeout(timer);}
+    timer = setTimeout(async () => {
+        profile_data = await request("POST", "/api/profile/color", val)
+        await load(profile_data)
+    }, 200)
+}
+
+function fromNameLength(name) {
+    colors = ["#ff0000", "#ff7300", "#ffd000", "#c3ff00", "#59ff00", "#00ff8c", "#00fff7", "#0073ff", "#6f00ff", "#dd00ff", "#ff0084"]
+    colors_bw = ["white", "black", "black", "black", "black", "black", "black", "white", "black", "white", "white"]
+    size = name.length + (name.split("e").length - 1 )
+    if (size > 11) {
+        size -= 11
+    }
+
+    color = colors[size]
+    bw = colors_bw[size]
+    console.log(name.length)
+    console.log(color)
+    return {color:color, size:size, style:`background-color:${color};border-radius:${size}px;color:${bw}`}
 }
 

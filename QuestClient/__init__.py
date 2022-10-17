@@ -8,7 +8,7 @@ if typing.TYPE_CHECKING:
 from discord.ext import commands
 import json
 
-from QuestClient import classes, errors
+from QuestClient import classes, errors, data
 from QuestClient.components import paginator, autocompletes
 from resources import var
 from discord import client
@@ -61,7 +61,7 @@ class QuestClient():
 
 class Client():
 
-    def __init__(self, bot : client.Client):
+    def __init__(self, bot : typing.Union[client.Client, commands.Bot]):
 
         self.bot = bot 
         self.var = var

@@ -20,11 +20,12 @@ Basic Modal Styles
 }
 
 .modal__close {
-    position:absolute;
+    
     border: 0;
     color:white;
     top:0;
     right:0;
+    position:fixed
 }
 
 

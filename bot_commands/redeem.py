@@ -35,11 +35,11 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
                 await economyUser.addBal(bank=reward.stars * multiplier, guild=ctx.guild)
 
                 if reward.xp != 0:
-                    userClass.addXP(reward.xp * multiplier)
+                    await userClass.addQuestXP(reward.xp * multiplier, ctx)
                 
                 embed = discord.Embed(
                     title=f"You redeemed {quest.name.replace('_', ' ').title()}!", 
-                    description=f"You redeemed this quest, which gave you {f'**{reward.stars*multiplier:,d}** stars' if reward.stars != 0 else ''}{' and ' if reward.stars != 0 and reward.xp != 0 else ''}{f'**{reward.xp*multiplier:,d}** Quest XP' if reward.xp != 0 else ''}! {f'Use **{qc.var.prefix}tier {quest.name}** to tier up!' if quest.tiers > 1 and progress.tier < quest.tiers else ''}",
+                    description=f"You redeemed this quest, which gave you {f'**{reward.stars*multiplier:,d}** stars' if reward.stars != 0 else ''}{' and ' if reward.stars != 0 and reward.xp != 0 else ''}{f'**{reward.xp*multiplier:,d}** {qc.var.quest_xp_currency}' if reward.xp != 0 else ''}! {f'Use **{qc.var.prefix}tier {quest.name}** to tier up!' if quest.tiers > 1 and progress.tier < quest.tiers else ''}",
                     color=qc.var.embedSuccess
                 )
                 

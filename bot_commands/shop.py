@@ -35,7 +35,7 @@ def getQuestXPShopEmbed(client : qc.Client):
         color=var.embed
     )
 
-    shopEmbed.add_field(name=f"Quest XP - {var.prefix}buy questxp [amount]", value=f"Conversion rate: **1** Quest XP for **{round(shop.getConversionRate(), 3)}**{var.currency}")
+    shopEmbed.add_field(name=f"Quest XP - {var.prefix}buy questxp [amount]", value=f"Conversion rate: **1** {qc.var.quest_xp_currency} for **{round(shop.getConversionRate(), 3)}**{var.currency}")
 
     return shopEmbed
 

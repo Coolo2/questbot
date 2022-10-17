@@ -3,44 +3,69 @@ import typing
 
 from discord.app_commands.commands import describe
 
+import QuestClient as qc
+
 if typing.TYPE_CHECKING:
     from QuestClient.classes import Quest as QuestFr
     from QuestClient import Client as ClientFr
     from QuestClient import classes as ClassesFr
 
-import re
 from discord.client import Coro
 from resources import var
 import discord
-import json, requests, random
+import json
+import random
 from datetime import datetime, timedelta
 
 import typing
 from discord import app_commands
+from discord.ext import commands
 
 import re
 import aiohttp
+import os
+
+with open("resources/zoo/emojis.json", encoding="utf-8") as f:
+    emojis_unicode_converter = json.load(f)
 
 class Badge():
-    def __init__(self, name : str, description : str, cost : int = None, quest : str = None):
+    def __init__(self, 
+                name : str, 
+                description : str, 
+                cost : int = None, 
+                image=None, 
+                quest : str = None, 
+                polaris_level : int = None,
+                quest_xp_level : int = None
+    ):
         self.name = name 
         self.description = description
         self.cost = cost 
         self.quest = quest
+        self.polaris_level = polaris_level
+        self.quest_xp_level = quest_xp_level
+        self.raw_name = name.lower().replace(" ", "_")
+    
+        self.custom_image = image 
+    
+    @property 
+    def image(self):
+        if self.custom_image:
+            return self.custom_image 
+        
+        if os.path.exists(f"website/static/images/badges/{self.raw_name}.png"):
+            return f"{self.raw_name}.png"
+        return None
 
-badges = {
-    "messenger":Badge("Messenger", "Complete tier 6 of message quest", quest="message"),
-    "pixel":Badge("Pixel", "Complete tier 6 of pixel quest", quest="pixel"),
-    "item":Badge("Item", "Complete tier 6 of item quest", quest="item"),
-    "count":Badge("Count", "Complete tier 6 of count quest", quest="count"),
-    "star":Badge("Star", "Complete tier 6 of money maker quest", quest="money_maker"),
-    "creature":Badge("Creature", "Complete tier 6 of creature quest", quest="creature"),
-    "shard":Badge("shard", "Complete tier 6 of shard quest", quest="shard"),
-    "voice":Badge("Voice", "Complete tier 6 of voice quest", quest="voice"),
-    "hoarder":Badge("Hoarder", "Complete tier 6 of hoarder quest", quest="hoarder"),
-    "quest":Badge("Quest", "Complete tier 6 of quest quest", quest="quest"),
-    "miniature":Badge("Miniature", "Complete all mini quests")
-}
+class Art():
+    def __init__(self, name : str, unlock : str, file : str):
+        self.name = name 
+        self.file = file
+        self.unlock = unlock
+
+        self.equipped : bool = False
+
+
 
 class Validator():
 
@@ -87,7 +112,7 @@ class Zoo():
                 return self.zoo.Creature(key, self.zoo.creaturesRaw["very_common"][key])
 
     class Creature():
-        def __init__(self, name, data=None):
+        def __init__(self, name : str, data=None):
             zoo = Zoo()
 
             self.name = name 
@@ -96,7 +121,7 @@ class Zoo():
             if data == None:
                 data = zoo.creatures[name]
 
-            self.emoji = data["emoji"]
+            self.emoji : str = data["emoji"]
             self.rarity = "golden" if name in zoo.creaturesRaw["golden"] else "rare" if name in zoo.creaturesRaw["rare"] else "common" if name in zoo.creaturesRaw else "very_common"
 
             if self.rarity in ["common", "very_common"]:
@@ -105,6 +130,13 @@ class Zoo():
                 self.sellPrice = random.randint(1000, 3000)
             else:
                 self.sellPrice = random.randint(10000, 50000)
+        
+        @property 
+        def emoji_unicode(self):
+            if self.emoji.replace(":", "") in emojis_unicode_converter:
+                return emojis_unicode_converter[self.emoji.replace(":", "")]
+            return None
+            
     
     class ShardProducer():
         def __init__(self, name, birthday, level, lastRefreshed):
@@ -191,10 +223,11 @@ class Zoo():
                 self.from_messageID = from_message
                 self.started = datetime.strptime(started, "%d-%b-%Y (%H:%M:%S.%f)")
 
-        def __init__(self, id):
+        def __init__(self, client : ClientFr, id):
             with open("data/zoo/creatureTrades.json") as f:
                 data = json.load(f)
 
+            self.client = client
             self.id = id
             id = str(id)
             self.fromData = self.FromTo(data[id]["from"]["user"], data[id]["from"]["creature"], data[id]["from"]["accepted"])
@@ -275,8 +308,8 @@ class Zoo():
             self.fromUser : discord.User = bot.get_user(int(self.fromData.userID))
             self.toUser : discord.User = bot.get_user(int(self.toData.userID))
 
-            self.fromUserClass = User(self.fromUser)
-            self.toUserClass = User(self.toUser)
+            self.fromUserClass = User(self.client, self.fromUser)
+            self.toUserClass = User(self.client, self.toUser)
 
             self.channel : discord.TextChannel = bot.get_channel(int(self.data.channelID))
             self.message = await self.channel.fetch_message(int(self.data.messageID))
@@ -366,7 +399,7 @@ class Shop():
         self.conversionRate = self.getConversionRate()
 
         self.items = {
-            "mushroom":self.Item("Mushroom", "Gives you a small boost of stars for 48 hours", timedelta(hours=48), 3),
+            "mushroom":self.Item("Mushroom", "Gives you a small boost of stars for 48 hours", timedelta(hours=24), 3),
             "fire_flower":self.Item("Fire Flower", "Inflames your next rob success and gives you double the stars", None, 4),
             "double_cherry":self.Item("Double Cherry", "Doubles the reward for your next quest", None, 7),
             "mask":self.Item("Mask", "Blocks all fines for one week", timedelta(days=7), 10),
@@ -375,8 +408,6 @@ class Shop():
             "thunder_cloud":self.Item("Thunder Cloud", "All crimes you recieve get sent to a random member instead of you for 48 hours", timedelta(hours=48), 20)
         }
     
-    
-
     def getConversionRate(self):
         date = datetime.today()
 
@@ -418,9 +449,6 @@ class User():
                 async with session.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", headers=var.UBheaders) as r:
                     data = await r.json()
 
-                    #r = requests.get(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", headers=var.UBheaders)
-                    #data = r.json()
-
                     self.rank = data["rank"] if "rank" in data else None
 
                     self.cash = data["cash"] if "cash" in data else 0
@@ -437,7 +465,6 @@ class User():
             async with aiohttp.ClientSession() as session:
                 async with session.patch(var.UBbase + f"/guilds/{self.guild.id}/users/{self.userClass.user.id}", data=json.dumps({"cash":cash, "bank":bank}), headers=var.UBheaders) as r:
                     data = await r.json()
-                    print(data)
 
                     self.cash = data["cash"]
                     self.bank = data["bank"]
@@ -494,27 +521,35 @@ class User():
             
         def removeCreature(self, creatureName, amount=1):
 
-            if self.creatures == None:
-                self.creatures
-            
-            if self.zoo == None:
-                self.getZoo()
-            
-            creatureData = self.zoo.creatures[creatureName]
-            
-            self.creatures.remove(creatureName)
+            with open("data/zoo/ownedCreatures.json") as f:
+                data = json.load(f)
 
-            for i in range(amount-1):
-                self.creatures.remove(creatureName)
+            creatures = self.creatures 
 
-            return creatureData
+            for i in range(amount):
+                creatures.remove(creatureName)
+
+            data[str(self.userClass.user.id)] = creatures
+
+            with open("data/zoo/ownedCreatures.json", "w") as f:
+                json.dump(data, f, indent=4)
+
+            return creatures
+
         
         def addCreature(self, creatureName):
 
-            if self.creatures == None:
-                self.creatures
-            
-            self.creatures.append(creatureName)
+            with open("data/zoo/ownedCreatures.json") as f:
+                data = json.load(f)
+
+            creatures = self.creatures 
+
+            creatures.append(creatureName)
+
+            data[str(self.userClass.user.id)] = creatures
+
+            with open("data/zoo/ownedCreatures.json", "w") as f:
+                json.dump(data, f, indent=4)
         
         def saveCreatures(self):
             with open("data/zoo/ownedCreatures.json") as f:
@@ -664,25 +699,33 @@ class User():
             self.user = user
         
         @property
-        async def badges(self):
+        async def badges(self) -> typing.List[Badge]:
             with open("data/badges.json") as f:
                 data = json.load(f)
+            xp_level = await self.user.xp_level
             
             if str(self.user.user.id) not in data:
                 data[str(self.user.user.id)] = {}
             
             badge_list : typing.List[Badge] = []
+
+            for name, badge in qc.data.badges.items():
+                if badge.polaris_level and badge.polaris_level <= xp_level:
+                    badge_list.append(badge)
+                if badge.quest_xp_level and badge.quest_xp_level <= getQuestXPLevel(self.user.getXP()):
+                    badge_list.append(badge)
             
             for quest in self.user.client.quest.quests:
                 progress = quest.getProgress(self.user.user)
                 if progress.tier == 6 and progress.finished:
-                    for name, badge in badges.items():
+
+                    for name, badge in qc.data.badges.items():
                         if badge.quest == quest.name:
                             badge_list.append(badge)
             
-            with open("data/badges.json", "w") as f:
-                json.dump(data, f, indent=4)
-            
+            for badge in data[str(self.user.user.id)].keys():
+                badge_list.append(qc.data.badges[badge])
+
             return badge_list
 
     class ProfileUser():
@@ -701,15 +744,82 @@ class User():
                 data[str(self.user.user.id)]["art"] = {}
             
             resp = {}
+            pa = qc.data.profile_art.copy()
             
             for art_name, owned_type in data[str(self.user.user.id)]["art"].items():
-                art = Web(self.user.client).profile_art[art_name]
+                art = pa[art_name]
+                art.equipped = False
                 if owned_type == "equipped":
                     art.equipped = True
 
                 resp[art_name] = art
             
             return resp
+        
+        @property 
+        def color(self) -> str:
+            with open("data/profile.json") as f:
+                data = json.load(f)
+            
+            if str(self.user.user.id) not in data or "color" not in data[str(self.user.user.id)]:
+                return "#5865F2"
+            return data[str(self.user.user.id)]["color"]
+        
+        @property 
+        def pinned_badges(self) -> typing.List[str]:
+            with open("data/profile.json") as f:
+                data = json.load(f)
+            
+            return data[str(self.user.user.id)]["pinned_badges"] if str(self.user.user.id) in data and "pinned_badges" in data[str(self.user.user.id)] else []
+        
+        async def set_art(self, art_name : str, value : str):
+            with open("data/profile.json") as f:
+                data = json.load(f)
+
+            if str(self.user.user.id) not in data :
+                data[str(self.user.user.id)] = {}
+            if "art" not in data[str(self.user.user.id)]:
+                data[str(self.user.user.id)]["art"] = {}
+            
+            data[str(self.user.user.id)]["art"][art_name] = value 
+
+            with open("data/profile.json", "w") as f:
+                json.dump(data, f, indent=4)
+        
+        async def set_value(self, name : str, value : str):
+            with open("data/profile.json") as f:
+                data = json.load(f)
+
+            if str(self.user.user.id) not in data :
+                data[str(self.user.user.id)] = {}
+            
+            data[str(self.user.user.id)][name] = value 
+
+            with open("data/profile.json", "w") as f:
+                json.dump(data, f, indent=4)
+
+    @property 
+    async def xp_level(self) -> int:
+        xp_level = 0
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://gdcolon.com/polaris/api/leaderboard/{var.allowed_guilds[0].id}", headers=var.UBheaders) as r:
+                r_json = await r.json()
+                curve = r_json["settings"]["curve"]
+                xp_leaderboard = r_json["leaderboard"]
+
+                for lb_user in xp_leaderboard:
+                    if lb_user["id"] != str(self.user.id):
+                        continue
+                    xp = lb_user["xp"]
+
+                    for i_up in range(1, 100):
+                        i = 100-i_up
+                        xp_required = (curve["3"]*(i**3)) + (curve["2"]*(i**2)) + (curve["1"]*i)   
+
+                        if xp > xp_required:
+                            xp_level = i
+                            break
+        return xp_level
 
     def __init__(self, client : ClientFr, user : discord.User):
         
@@ -728,8 +838,34 @@ class User():
     
     def getXP(self) -> int:
         return self.getValue("xp")
-    def addXP(self, amount) -> int:
-        return self.setValue("xp", amount)
+
+    async def addQuestXP(self, amount : int, channel : discord.TextChannel = None) -> int:
+        prevXP = self.getXP()
+        prev_level = getQuestXPLevel(prevXP)
+
+        newXP = prevXP + amount
+        new_level = getQuestXPLevel(newXP)
+
+        newValue = self.setValue("xp", amount)
+
+        rewards : typing.List[qc.data.LevelReward] = []
+
+        for i in range(prev_level, new_level):
+            level = i+1 
+
+            if len(qc.data.levels) >= level and channel and qc.data.levels[level-1] != None:
+                rewards.append(qc.data.levels[level-1])
+                
+        lvlup_message = f"> {self.user.mention}, You levelled up in **Quest XP** to level **{level}**! You will get: "
+        for reward in rewards:
+            lvlup_message += f"\n   - {reward.name}"
+            
+        await channel.send(lvlup_message)
+
+        for reward in rewards:
+            await reward.redeem(self.client, self, channel)
+
+        return newValue
     
     def getShards(self) -> int:
         return self.getValue("shards")
@@ -1001,20 +1137,21 @@ class EmbedReader():
         
         return result
 
-class Art():
-    def __init__(self, name : str, file : str):
-        self.name = name 
-        self.file = file
+QuestXPLevels : typing.List[int] = []
 
-        self.equipped : bool = False
+for count in range(0, 51):
+    xp_required = 3000*(count) + 225*(count**2)
+    QuestXPLevels.append(xp_required)
 
-class Web():
-    def __init__(self, client : ClientFr):
-        self.client = client 
 
-        self.profile_art : typing.Dict[str, Art] = {
-            "background_2":Art("Geometry Dash Background", "background_2.png"),
-            "background_3":Art("Dash background", "background_3.png"),
-            "banner_2":Art("Geometry Dash Banner", "banner_2.png"),
-            "banner_3":Art("Dash banner", "banner_3.png")
-        }
+def getQuestXPLevel(quest_xp : int):
+
+    level : int = 0
+    for i_up in range(1, 51):
+        i = 51-i_up 
+        xp_required = 3000*(i) + 225*(i**2)
+        if quest_xp >= xp_required:
+            level = i 
+            break 
+    
+    return level

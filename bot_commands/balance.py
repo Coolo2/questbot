@@ -33,7 +33,12 @@ async def command(client : qc.Client, ctx : commands.Context, userO : discord.Us
     embed.add_field(name="Bank", value=f"{qc.var.currency}{user.economy.bank:,d}")
     embed.add_field(name="Total", value=f"{qc.var.currency}{user.economy.total:,d}")
 
-    embed.add_field(name="Quest XP", value=f"{user.getXP():,d}")
-    embed.add_field(name="Shards", value=f"{user.getShards():,d}")
+    userquestxp = user.getXP()
+    questxplevel = qc.classes.getQuestXPLevel(userquestxp)
+    questxp = f"{qc.var.quest_xp_currency}{userquestxp:,d} *(level {questxplevel})*"
+    if len(qc.classes.QuestXPLevels) >= questxplevel+1:
+        questxp += f"\n{qc.classes.QuestXPLevels[questxplevel+1]-userquestxp:,d} to next level"
+    embed.add_field(name="Quest XP", value=questxp)
+    embed.add_field(name="Shards", value=f"{qc.var.shards_currency}{user.getShards():,d}")
 
     await ctx.send(embed=embed)

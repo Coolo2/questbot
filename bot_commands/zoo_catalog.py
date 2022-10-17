@@ -44,7 +44,7 @@ async def command(client : qc.Client, ctx : commands.Context, section : str, use
     embed = discord.Embed(title=f"{section.title()} catalog", description=catalog_pages[0], color=qc.var.embed)
     embed.set_footer(text=f"{amount}/{len(creatureList)} different {section} creatures collected")
 
-    view = qc.paginator.PaginatorView(catalog_pages, embed)
+    view = qc.paginator.PaginatorView(catalog_pages, embed, private=ctx.author)
 
     return await ctx.send(embed=embed, view=view)
 

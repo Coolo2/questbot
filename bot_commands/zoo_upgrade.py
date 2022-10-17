@@ -1,16 +1,12 @@
-import json, discord, random, asyncio
+import discord
 
 from resources import var
 import QuestClient as qc
 
-import typing
-
 from discord.ext import commands 
-from discord import app_commands
-import datetime
 
-shinyUpgradeCosts = [None, 20_000, 30_000, 40_000, 50_000, 60_000]
-standardUpgradeCosts = [None, 10_000, 15_000, 20_000, 25_000, 30_000]
+shinyUpgradeCosts = [None, 150_000, 240_000, 500_000, 1_000_000]
+standardUpgradeCosts = [None, 50_000, 80_000, 150_000, 300_000]
 
 async def command(client : qc.Client, ctx : commands.Context, producer : str):
     
@@ -52,7 +48,7 @@ async def command(client : qc.Client, ctx : commands.Context, producer : str):
     embed = discord.Embed(
         title=f"Upgraded your {producer.readableName}", 
         description=f"""Your **{producer.readableName}** was upgraded to level **{producer.level}**, costing you **{cost:,d}**{var.currency}
-You will now get **{upgradedProducer.shards}** shards every **{upgradedProducer.hoursForShard}** hours""",
+You will now get **{upgradedProducer.shards}** {qc.var.shards_currency} every **{upgradedProducer.hoursForShard}** hours""",
         color=var.embedSuccess
     )
     embed.add_field(name="Balance", value=f"You now have **{user.economy.bank:,d}**{var.currency} in your bank")

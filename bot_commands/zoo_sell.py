@@ -36,7 +36,7 @@ async def command(client : qc.Client, ctx : commands.Context, creature : str):
     zoo.getTrades()
 
     for trade in zoo.trades:
-        t = zoo.Trade(trade)
+        t = zoo.Trade(client, trade)
 
         await t.getData(client.bot)
 

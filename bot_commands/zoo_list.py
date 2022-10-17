@@ -1,3 +1,6 @@
+from __future__ import annotations
+import typing
+
 #from bot_commands.miniquests import miniquests
 import discord
 from discord.ext import commands
@@ -9,8 +12,13 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
+if typing.TYPE_CHECKING:
+    from QuestClient.classes import Quest as QuestFr
+    from QuestClient import Client as ClientFr
+    from QuestClient import classes as ClassesFr
 
-async def command(client : qc.Client, ctx : commands.Context, page : int = None, oUser : discord.Member = None, filter : str = None):
+
+async def command(client : ClientFr, ctx : commands.Context, page : int = None, oUser : discord.Member = None, filter : str = None):
 
     accepted = ["golden", "shiny", "standard"]
 
@@ -67,6 +75,6 @@ async def command(client : qc.Client, ctx : commands.Context, page : int = None,
 
     embed = discord.Embed(title=f"{user.user}'s {filter + ' ' if filter else ''}creature list ({creatureCount}x)", description=creatures[page-1], color=qc.var.embed)
 
-    view = qc.paginator.PaginatorView(creatures, embed, page-1)
+    view = qc.paginator.PaginatorView(creatures, embed, page-1, private=ctx.author)
 
     await ctx.send(embed=embed, view=view)

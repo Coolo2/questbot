@@ -1,9 +1,6 @@
 {
     "368071242189897728": [
-        "parrot",
-        "elephant",
         "potato_mine",
-        "crewmate",
         "seal",
         "dash",
         "brainslug",
@@ -12,14 +9,34 @@
         "tiger",
         "fish",
         "parrot",
-        "seal"
+        "seal",
+        "squash",
+        "squash",
+        "parrot",
+        "gordo",
+        "golden_test5",
+        "t-rex",
+        "golden_test2",
+        "shiny_dog",
+        "shiny_blixer",
+        "swan",
+        "squid",
+        "sheep",
+        "squid",
+        "huebird",
+        "moon"
     ],
     "342136746944757760": [
         "fall_guy",
         "cheems",
-        "noggin"
+        "noggin",
+        "maw",
+        "shiny_zombie",
+        "chain_chomp",
+        "owl"
     ],
     "418123290595426314": [
-        "squash"
+        "parrot",
+        "elephant"
     ]
 }

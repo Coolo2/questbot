@@ -8,20 +8,28 @@
 </head>
 <body>
     
-
-    <div id="profile">
+    <div id="user" class="noselect">
+        <span><img id="user-avatar"></span>
+        <span id="user-name"></span>
+        <span id="user-logout">Log Out</span>
+    </div>
+    <div id="profile" class="noselect">
         <div id="profile-banner"></div>
         <div class="badges">Badges:</div>
         <div aria-label="Edit your profile" data-balloon-pos="right" id="edit"><i class="fa-solid fa-pencil"></i></div>
         <div id="badges"></div>
-        <div id="background"></div>
-        <div id="user">
+        <div class="background-container"><div id="background"></div></div>
+        <div id="profile-user">
             <div id="identity">
                 <span id="name"></span><span id="discriminator"></span>
             </div>
             <img id="avatar">
         </div>
-        <div id="creatures"><div class="field-name" id="creatures-name">Creatures</div></div>
+        <div id="creatures-container" aria-label="View all creatures" data-balloon-pos="down">
+            <div class="field-name" id="creatures-name">Creatures</div>
+            <div id="creatures"></div>
+        </div>
+        
 
         <div class="fields">
             <div class="bank-cash">
@@ -41,27 +49,37 @@
             </div>
             <div class="quest_xp">
                 <div class="field-name">Quest XP</div>
-                <div class="field-value" id="quest_xp"></div>
+                <span class="field-value" id="quest_xp"></span>
+                <span><img id="quest_xp_currency"></span>
             </div>
             <div class="shards">
                 <div class="field-name">Shards</div>
-                <div class="field-value" id="shards"></div>
+                <span class="field-value" id="shards"></span>
+                <span><img id="shards_currency"></span>
             </div>
         </div>
     </div>
 
     <!-- [1] -->
-    <div class="modal micromodal-slide" id="modal-1" aria-hidden="true">
+    <div class="modal micromodal-slide noselect" id="modal-1" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
             <div class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
-                <span class="modal__close" aria-label="Close modal" data-balloon-pos="right" data-micromodal-close><i class="fa-solid fa-xmark"></i></span>
-                <center><div class="field-name">Edit Profile</div></center>
+                <div style="width:100%;height:100%;">
+                    <span class="modal__close" aria-label="Close modal" data-balloon-pos="right" data-micromodal-close><i class="fa-solid fa-xmark"></i></span>
+                    <center><div class="field-name">Edit Profile</div></center>
 
-                <div class="field-name">Background Image</div>
-                <div id="edit-background-image"></div>
-                
-                <div class="field-name"><br>Banner Image</div>
-                <div id="edit-banner-image"></div>
+                    <div class="field-name">Background Image</div>
+                    <div id="edit-background-image"></div>
+                    
+                    <div class="field-name"><br>Banner Image</div>
+                    <div id="edit-banner-image"></div>
+
+                    <div class="field-name"><br>Banner Color</div>
+                    <input type="color" id="edit-banner-color" value="#5865F2">
+
+                    <div class="field-name"><br>Pinned Badges</div>
+                    <div id="edit-pinned-badges"></div>
+                </div>
             </div>
         </div>
     </div>

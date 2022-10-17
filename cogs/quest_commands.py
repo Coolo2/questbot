@@ -4,9 +4,11 @@ from discord.ext import commands
 
 import QuestClient as qc
 
+import requests 
+from PIL import Image
 
 from bot_commands import buy, zoo_list, shop, zoo_sell, zoo_catalog, zoo_trade, zoo_merge, zoo_shardproducers, zoo_upgrade
-from bot_commands import balance, quests, miniquests, start, redeem, tier, leaderboard, items
+from bot_commands import balance, quests, miniquests, start, redeem, tier, leaderboard, items, profile, compliment
 
 from discord import app_commands
 from discord.ext.commands.hybrid import hybrid_group
@@ -51,6 +53,14 @@ class QuestCommandsCog(commands.Cog):
     async def _items(self, ctx : commands.Context, user : discord.User = None):
         await items.command(self.client, ctx, user)
     
+    @commands.hybrid_command(name="profile", description="See your profile")
+    async def _profile(self, ctx : commands.Context, user : discord.User = None):
+        await profile.command(self.client, ctx, user)
+    
+    @commands.hybrid_command(name="compliment", description="Get a compliment (requires Quest XP level 5)")
+    async def _compliment(self, ctx : commands.Context):
+        await compliment.command(self.client, ctx)
+    
     @hybrid_group()
     async def zoo(self, ctx):
         pass
@@ -79,7 +89,7 @@ class QuestCommandsCog(commands.Cog):
     async def _zoo_shardproducers(self, ctx : commands.Context, user : discord.User = None, page : int = None):
         await zoo_shardproducers.command(self.client, ctx, user, page)
     
-    @zoo.command(name="upgrade", description="Upgrade a shark producer for stars")
+    @zoo.command(name="upgrade", description="Upgrade a shard producer for stars")
     @app_commands.autocomplete(shard_producer=qc.autocompletes.owned_shard_producers)
     async def _zoo_upgrade(self, ctx : commands.Context, shard_producer : str):
         await zoo_upgrade.command(self.client, ctx, shard_producer)
@@ -132,6 +142,16 @@ class QuestCommandsCog(commands.Cog):
     @buy.command(name="quest_xp", description="Convert stars to Quest XP")
     async def _buy_quest_xp(self, ctx : commands.Context, amount : app_commands.Range[int, 1]):
         await buy.quest_xp(self.client, ctx, amount)
+    
+    @commands.command(name="badge")
+    async def _add_badge(self, ctx : commands.Context, name : str):
+        if len(ctx.message.attachments) == 0:
+            return
+
+        image = Image.open(requests.get(ctx.message.attachments[0].url, stream=True).raw)
+        image.thumbnail((128, 128))
+        image.save(f'website/static/images/badges/{name}.png')
+        print(image.size) # Output: (400, 350)
 
         
 

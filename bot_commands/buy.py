@@ -1,3 +1,6 @@
+from __future__ import annotations
+import typing
+
 #from bot_commands.miniquests import miniquests
 import discord
 from discord.ext import commands
@@ -12,9 +15,14 @@ from QuestClient.quests import creature as creatureQuest
 
 import datetime
 
+if typing.TYPE_CHECKING:
+    from QuestClient.classes import Quest as QuestFr
+    from QuestClient import Client as ClientFr
+    from QuestClient import classes as ClassesFr
+
 class CheckoutView(discord.ui.View):
 
-    def __init__(self, client : qc.Client, user : qc.classes.User, shop : qc.classes.Shop, amount : int):
+    def __init__(self, client : ClientFr, user : qc.classes.User, shop : qc.classes.Shop, amount : int):
 
         self.client = client 
         self.user = user 
@@ -36,19 +44,21 @@ class CheckoutView(discord.ui.View):
             item.disabled = True
         
         if self.user.economy.bank < cost:
-            embed = discord.Embed(title="Uh oh!", description=f'You do not have enough money ({cost:,d}) **in bank** for this amount of quest xp!', color=qc.var.embedFail)
+            embed = discord.Embed(title="Uh oh!", description=f'You do not have enough money ({cost:,d}) **in bank** for this amount of Quest XP!', color=qc.var.embedFail)
             return await interaction.response.edit_message(embed=embed)
 
         await self.user.economy.addBal(bank=0-cost)
-        self.user.addXP(self.amount)
+        
 
         embed = discord.Embed(
             title="Successfully purchased",
-            description=f"Successfully purchased **{self.amount:,d}** Quest XP for **{cost:,d}**{qc.var.currency}",
+            description=f"Successfully purchased **{self.amount:,d} {qc.var.quest_xp_currency}** for **{cost:,d}**{qc.var.currency}",
             color=qc.var.embedSuccess
         )
 
         await interaction.response.edit_message(embed=embed, view=self)
+
+        await self.user.addQuestXP(self.amount, channel=interaction.channel)
     
     @discord.ui.button(label="Cancel Purchase", style=discord.ButtonStyle.red)
     async def cancel_button(self, interaction : discord.Interaction, button : discord.ui.Button):
@@ -115,6 +125,8 @@ async def crate(client : qc.Client, ctx : commands.Context, crate_type : str, co
     view = discord.ui.View()
     button = discord.ui.Button(label="See creature list", emoji="📃")
     async def response(interaction : discord.Interaction):
+        if interaction.user != ctx.author:
+            return
         await zoo_list.command(client, ctx)
     button.callback = response
     view.add_item(button)
@@ -168,7 +180,7 @@ async def item(client : qc.Client, ctx : commands.Context, item : str):
 
     new_item = user.item.buy_item(item)
     
-    desc = f"Successfully purchased a **{item.name}** for **{item.cost} Shards**!"
+    desc = f"Successfully purchased a **{item.name}** for **{item.cost} {qc.var.shards_currency}**!"
 
     if item.lasts:
         ends_at_relative = f"<t:{round((item.active_since + new_item.lasts).timestamp())}:f>"

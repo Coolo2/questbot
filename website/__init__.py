@@ -33,8 +33,7 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
 
     scopes_identify = discordoauth.Scopes(identify=True)
 
-    if var.production:
-        logging.getLogger('quart.serving').setLevel(logging.ERROR)
+    logging.getLogger('quart.serving').setLevel(logging.ERROR)
 
     if var.production == False:
         app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -69,16 +68,12 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
         
         return quart.jsonify(emojis)
     
-    @app.route("/api/profile/<path:user_id>", methods=["GET"])
-    async def _api_profile(user_id):
-
+    async def api_profile(user_id):
         guild = bot.get_guild(client.var.allowed_guilds[0].id)
         
         user = bot.get_user(int(user_id))
         cl_user = qc.classes.User(client, user)
         await cl_user.economy.loadBal(guild)
-
-        web = qc.classes.Web(client)
 
         data = {}
 
@@ -89,7 +84,7 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
             "discriminator":user.discriminator
         }
 
-        data["badges"] = [{"name":b.name, "description":b.description} for b in await cl_user.badge.badges]
+        data["badges"] = [{"name":b.name, "description":b.description, "raw_name":b.raw_name, "image":b.image} for b in await cl_user.badge.badges]
 
         data["balances"] = {
             "ub":{"cash":cl_user.economy.cash, "bank":cl_user.economy.bank, "total":cl_user.economy.total},
@@ -100,30 +95,49 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
         cl_user.zoo.getZoo()
 
         data["currency"] = f"https://cdn.discordapp.com/emojis/{client.var.currency.split(':')[2].replace('>', '')}.webp"
-        data["creatures"] = cl_user.zoo.creatures
+        data["shards_currency"] = f"https://cdn.discordapp.com/emojis/{client.var.shards_currency.split(':')[2].replace('>', '')}.webp"
+        data["quest_xp_currency"] = f"https://cdn.discordapp.com/emojis/{client.var.quest_xp_currency.split(':')[2].replace('>', '')}.webp"
+        data["creatures"] = []
+
+        for creature in cl_user.zoo.creatures:
+            c = qc.classes.Zoo().Creature(creature)
+            data["creatures"].append({"name":c.name, "emoji":c.emoji, "unicode":c.emoji_unicode})
 
         data["profile_art"] : typing.List[dict] = []
-        for name, profile_art in web.profile_art.items():
+        
+        profile_art_user = cl_user.profile.profile_art
+        for name, profile_art in qc.data.profile_art.items():
             d = {
                 "name":profile_art.name,
                 "file":profile_art.file,
+                "unlock":profile_art.unlock,
+                "raw_name":name,
                 "owned":False,
                 "equipped":False
             }
-            if name in cl_user.profile.profile_art:
+            
+            if name in profile_art_user:
                 d["owned"] = True 
-                if cl_user.profile.profile_art[name].equipped == True:
+                if profile_art_user[name].equipped == True:
                     d["equipped"] = True
 
             data["profile_art"].append(d)
         
+        data["color"] = cl_user.profile.color
+        data["pinned_badges"] = cl_user.profile.pinned_badges
         
-        return quart.jsonify(data)
+        
+        return data
+
+    @app.route("/api/profile/<path:user_id>", methods=["GET"])
+    async def _api_profile(user_id):
+        return quart.jsonify(await api_profile(user_id))
+        
     
     @app.route("/login", methods=["GET"])
     async def login():
         
-        resp = await quart.make_response(quart.redirect(var.identify))
+        resp = await quart.make_response(quart.redirect(oauth_client.get_oauth_url(scopes_identify, var.address + "/return")))
 
         if "to" in quart.request.args:
             resp.set_cookie("redirectTo", urllib.parse.quote(quart.request.args["to"]))
@@ -158,9 +172,8 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
         
         rt = secrets.token_urlsafe(16)
         try:
-            print(code)
             access = await session.refresh_access_token(code)
-        except oauth_errors.HTTPError:
+        except:
             return quart.jsonify({"error":"Login invalid"})
 
         user = await session.fetch_user()
@@ -200,7 +213,8 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
 
         return resp
     
-    async def get_member(guild : discord.Guild, request : quart.Request) -> discord.Member:
+    async def get_member(request : quart.Request) -> discord.Member:
+        guild = bot.get_guild(var.allowed_guilds[0].id)
         reuse_token = request.cookies.get("reuse_token")
 
         member : discord.Member = guild.get_member(int(users[reuse_token]["user"]["id"]))
@@ -209,6 +223,68 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
 
         return member
     
+    @app.route("/api/profile/art", methods=["POST"])
+    async def _toggle_profile_art():
+        member = await get_member(quart.request)
+
+        if not member:
+            return quart.jsonify({"error":"Not logged in"})
         
+        cl_user = qc.classes.User(client, member)
+        
+        data : typing.Dict[str, str] = await quart.request.json
+
+        for art_name, art_value in data.items():
+            await cl_user.profile.set_art(art_name, art_value)
+
+        return quart.jsonify(await api_profile(member.id))
+    
+    @app.route("/api/profile/color", methods=["POST"])
+    async def _change_profile_color():
+        member = await get_member(quart.request)
+
+        if not member:
+            return quart.jsonify({"error":"Not logged in"})
+        
+        cl_user = qc.classes.User(client, member)
+        
+        data : typing.Dict[str, str] = await quart.request.json
+
+        await cl_user.profile.set_value("color", data)
+
+        return quart.jsonify(await api_profile(member.id))
+    
+    @app.route("/api/profile/pinned_badges", methods=["POST"])
+    async def _set_pinned_badges():
+        member = await get_member(quart.request)
+
+        if not member:
+            return quart.jsonify({"error":"Not logged in"})
+        
+        cl_user = qc.classes.User(client, member)
+        
+        data : typing.Dict[str, str] = await quart.request.json
+
+        await cl_user.profile.set_value("pinned_badges", data)
+
+        return quart.jsonify(await api_profile(member.id))
+    
+    @app.route("/logout", methods=["GET"])
+    async def logout():
+
+        uri = "/"
+        if "to" in quart.request.args:
+            uri = quart.request.args["to"]
+        
+        resp = await quart.make_response(quart.redirect(uri))
+
+        
+            
+
+        resp.delete_cookie("code")
+        resp.delete_cookie("reuse_token")
+        resp.delete_cookie("reuse_token_guild")
+
+        return resp    
 
     return app

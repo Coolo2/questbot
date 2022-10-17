@@ -58,7 +58,7 @@ async def command(client : qc.Client, ctx : commands.Context, userO : discord.Us
     for producer in shardProducers:
         description_full += f"""
 [{producer.rarity.title()}] {producer.emoji} **{producer.readableName}** (Age: {(datetime.datetime.now() - producer.birthdate).days} days)
-**Level {producer.level}** - {producer.shards} shard{'' if producer.shards == 1 else 's'} every {producer.hoursForShard} hours
+**Level {producer.level}** - {producer.shards} {qc.var.shards_currency} every {producer.hoursForShard} hours
 _ _"""
 
     description_split = description_full.split("\n")
@@ -67,7 +67,7 @@ _ _"""
 
     embed = discord.Embed(title=f"{user.user}'s Shard Producers ({perHour}/h)", description=shard_producers_pages[page-1], color=var.embed)
 
-    view = qc.paginator.PaginatorView(shard_producers_pages, embed)
+    view = qc.paginator.PaginatorView(shard_producers_pages, embed, private=ctx.author)
 
     await ctx.send(embed=embed, view=view)
     

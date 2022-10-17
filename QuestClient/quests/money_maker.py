@@ -56,7 +56,7 @@ async def check(client : ClFr, message : discord.Message, embed_reader : classes
             # Items
             boost_div = None
             if unb_user.item.has_item(name="mushroom"):
-                boost_div = 2
+                boost_div = 0.2
             if unb_user.item.has_item(name="mega_mushroom"):
                 boost_div = 1
             

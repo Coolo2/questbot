@@ -1,15 +1,13 @@
 import enum
 import discord
 
-
-
-
 class PaginatorView(discord.ui.View):
 
-    def __init__(self, pages : list, embed : discord.Embed, index : int = 0):
+    def __init__(self, pages : list, embed : discord.Embed, index : int = 0, private = None):
         self.embed = embed
         self.pages = pages 
         self.index = index
+        self.private : discord.User = private
 
         if self.embed.footer.text and "Page " not in self.embed.footer.text:
             self.embed.set_footer(text=f"{self.embed.footer.text} - Page {self.index+1}/{len(self.pages)}")
@@ -25,6 +23,9 @@ class PaginatorView(discord.ui.View):
     
     @discord.ui.button(style=discord.ButtonStyle.primary, emoji="◀️", disabled=True)
     async def _left(self, interaction : discord.Interaction, button: discord.ui.Button):
+        if self.private and interaction.user != self.private:
+            return 
+
         embed = self.embed 
 
         self.index -= 1
@@ -39,6 +40,8 @@ class PaginatorView(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.primary, emoji="▶️")
     async def _right(self, interaction : discord.Interaction, button: discord.ui.Button):
+        if self.private and interaction.user != self.private:
+            return 
         
         embed = self.embed 
 
@@ -54,6 +57,8 @@ class PaginatorView(discord.ui.View):
     
     @discord.ui.button(style=discord.ButtonStyle.primary, emoji="🔎")
     async def _search(self, interaction : discord.Interaction, button : discord.ui.Button):
+        if self.private and interaction.user != self.private:
+            return 
 
         await interaction.response.send_modal(SearchModal(self))
 

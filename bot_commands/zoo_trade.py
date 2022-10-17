@@ -24,7 +24,7 @@ async def get_accept_view(client : qc.Client, zoo : qc.classes.Zoo, tradeID : in
             super().__init__(label="Accept Trade", style=discord.ButtonStyle.green, emoji="✅", custom_id=f"accept_trade_{self.trade_id}")
         
         async def callback(self, interaction : discord.Interaction):
-            trade = self.zoo.Trade(self.trade_id)
+            trade = self.zoo.Trade(self.client, self.trade_id)
             await trade.getData(self.client.bot)
 
             if trade.fromUser == interaction.user:
@@ -51,6 +51,8 @@ async def get_accept_view(client : qc.Client, zoo : qc.classes.Zoo, tradeID : in
                 trade.toUserClass.zoo.removeCreature(trade.toData.creature)
                 trade.fromUserClass.zoo.removeCreature(trade.fromData.creature)
 
+                print(trade.toUserClass.zoo.creatures)
+
                 trade.toUserClass.zoo.saveCreatures()
                 trade.fromUserClass.zoo.saveCreatures()
 
@@ -71,7 +73,7 @@ async def get_accept_view(client : qc.Client, zoo : qc.classes.Zoo, tradeID : in
             super().__init__(label="Deny Trade", style=discord.ButtonStyle.red, emoji="❌", custom_id=f"deny_trade_{self.trade_id}")
         
         async def callback(self, interaction : discord.Interaction):
-            trade = self.zoo.Trade(self.trade_id)
+            trade = self.zoo.Trade(self.client, self.trade_id)
             await trade.getData(self.client.bot)
 
             if interaction.user != trade.fromUser and interaction.user != trade.toUser:
@@ -245,8 +247,6 @@ async def load_views(client : qc.Client):
 
     zoo = client.get_zoo()
     zoo.getTrades()
-
-    print(zoo.trades)
 
     for trade_id, trade in zoo.trades.items():
         view = await get_accept_view(client, zoo, int(trade_id))

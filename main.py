@@ -29,8 +29,12 @@ async def on_ready():
     refreshData.start()
 
     await client.initialise_ub()
-    print(client.eco_totals)
-    
+
+    #import requests;from resources import shiny_converter;from PIL import Image;channel = await bot.fetch_channel(1026208828976537720)
+    #async for message in channel.history(limit=1000): 
+    #    if len(message.attachments) == 0: continue
+    #    background = Image.open(requests.get(message.attachments[0].url, stream=True).raw);shiny_converter.get_output(background);await bot.get_channel(1026587766739443814).send(content=message.content, file=discord.File("output.gif"))
+
     await bot.change_presence(activity=discord.Game(name=f"{var.prefix}help | Made for Dash's Lounge"))
 
 @tasks.loop(seconds=30)
@@ -39,7 +43,7 @@ async def refreshData():
     zoo = client.get_zoo()
     zoo.getTrades()
     for tradeID in zoo.trades:
-        trade = zoo.Trade(tradeID)
+        trade = zoo.Trade(client, tradeID)
         if (datetime.datetime.now() - trade.data.started).total_seconds() > (24 * 60 * 60):
             await trade.getData(bot)
             await trade.end("Timed out")
@@ -54,11 +58,9 @@ async def setup_hook():
 
     await zoo_trade.load_views(client)
 
-    quart_app = await website.generate_app(bot, client)
-    bot.loop.create_task(quart_app.run_task(host=var.host, port=var.port, use_reloader=False))
+    quart_app : website.quart.Quart = await website.generate_app(bot, client)
+    bot.loop.create_task(quart_app.run_task(host=var.host, port=var.port))
 
 bot.setup_hook = setup_hook
-
-print("\n\n")
 
 bot.run(os.getenv("token"))
