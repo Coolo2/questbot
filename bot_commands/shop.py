@@ -9,8 +9,7 @@ from discord.ext import commands
 from discord import app_commands
 
 def getCreatureShopEmbed(client : qc.Client):
-    zoo = client.get_zoo()
-    shop = qc.classes.Shop()
+    zoo = client.zoo
 
     shopEmbed = discord.Embed(
         title="Today's Creature Crate shop",
@@ -22,12 +21,11 @@ def getCreatureShopEmbed(client : qc.Client):
     for crate in cs:
         crates += f"{crate.emoji}    **{crate.readableName}** ({crate.price:,d}{var.currency})\n{crate.description}.\n\n"
 
-    shopEmbed.add_field(name=f"Creature Crates - {var.prefix}buy crate [crateName]", value=crates, inline=False)
+    shopEmbed.add_field(name=f"Creature Crates - /buy crate [crateName]", value=crates, inline=False)
 
     return shopEmbed
 
 def getQuestXPShopEmbed(client : qc.Client):
-    zoo = client.get_zoo()
     shop = qc.classes.Shop()
 
     shopEmbed = discord.Embed(
@@ -35,12 +33,11 @@ def getQuestXPShopEmbed(client : qc.Client):
         color=var.embed
     )
 
-    shopEmbed.add_field(name=f"Quest XP - {var.prefix}buy questxp [amount]", value=f"Conversion rate: **1** {qc.var.quest_xp_currency} for **{round(shop.getConversionRate(), 3)}**{var.currency}")
+    shopEmbed.add_field(name=f"Quest XP - /buy questxp [amount]", value=f"Conversion rate: **1** {qc.var.quest_xp_currency} for **{round(shop.getConversionRate(), 3)}**{var.currency}")
 
     return shopEmbed
 
 def getItemShopEmbed(client : qc.Client):
-    zoo = client.get_zoo()
     shop = qc.classes.Shop()
 
     shopEmbed = discord.Embed(
@@ -49,7 +46,7 @@ def getItemShopEmbed(client : qc.Client):
     )
 
     for item in shop.items.values():
-        shopEmbed.add_field(name=f"{item.name} ({item.cost:,d} Shards)", value=item.description, inline=False)
+        shopEmbed.add_field(name=f"{item.name} ({var.shards_currency} {item.cost:,d})", value=item.description, inline=False)
 
     return shopEmbed
 

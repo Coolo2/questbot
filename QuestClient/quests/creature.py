@@ -15,11 +15,12 @@ async def check(client : ClFr, user : discord.Member):
 
     clUser = classes.User(client, user)
     
+    if quest.getProgress(user).started:
 
-    counts = quest.setValue(user, len(clUser.zoo.creatures))
-    if counts >= quest.required[quest.getProgress(user).tier]:
-        quest.setProgress(user, [True, True, False])
-        await quest.announceFinished(client, user.guild, user)
+        counts = quest.setValue(user, len(clUser.zoo.creatures))
+        if counts >= quest.required[quest.getProgress(user).tier] and not quest.getProgress(user).finished:
+            quest.setProgress(user, [True, True, False])
+            await quest.announceFinished(client, user.guild, user)
 
                 
 quest = classes.Quest(
@@ -36,5 +37,6 @@ quest = classes.Quest(
         classes.Reward(50_000, 5500), 
         classes.Reward(100_000, 10_000)
     ],
-    check=check
+    check=check,
+    amountType="creatures"
 )

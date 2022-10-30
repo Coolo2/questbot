@@ -43,5 +43,6 @@ quest = classes.Quest(
     reward=[None, 
         classes.Reward(5000, 3000) 
     ],
-    check=check
+    check=check,
+    amountType="members"
 )

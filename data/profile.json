@@ -1,39 +1,16 @@
 {
     "368071242189897728": {
         "art": {
-            "background_2": "equipped",
-            "banner_2": "equipped",
-            "background_3": "owned",
-            "banner_3": "owned",
-            "background_4": "owned",
-            "background_5": "owned",
-            "background_6": "owned",
-            "banner_4": "owned",
-            "banner_5": "owned",
-            "banner_6": "owned"
-        },
-        "color": "#7ae114",
-        "pinned_badges": [
-            "creature",
-            "quest",
-            "star",
-            "pixel",
-            "messenger"
-        ]
-    },
-    "342136746944757760": {
-        "art": {
-            "banner_2": "equipped",
-            "banner_3": "owned",
-            "banner_4": "owned",
-            "banner_5": "owned",
-            "banner_6": "owned",
-            "background_2": "owned",
-            "background_3": "owned",
-            "background_4": "owned",
+            "banner_5": "equipped",
             "background_5": "equipped",
-            "background_6": "owned"
+            "banner_4": "owned"
         },
-        "color": "#9399d7"
+        "pinned_badges": [
+            "messenger",
+            "quest_i",
+            "polaris_v",
+            "polaris_iv",
+            "polaris_iii"
+        ]
     }
 }

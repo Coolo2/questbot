@@ -20,11 +20,15 @@ def get_output(background : Image.Image):
     else:
         bg = bg.resize(background.size,Image.ANTIALIAS)
 
-    background.paste(bg, mask=bg)
+    img_w, img_h = bg.size
+    bg_w, bg_h = background.size
+    offset = ((bg_w - img_w) // 2, (bg_h - img_h) // 2)
+    background.paste(bg, offset, mask=bg)
+
+    #background.paste(bg, mask=bg)
 
     frames = []
     final_frame_count = math.lcm(1, animated_sparkle.n_frames)
-    print(final_frame_count)
     for i in range(final_frame_count):
         animated_sparkle.seek(i % animated_sparkle.n_frames)
         

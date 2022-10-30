@@ -1,4 +1,6 @@
 discord/
+test.py 
+creatures_test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -51,13 +51,8 @@ async def get_accept_view(client : qc.Client, zoo : qc.classes.Zoo, tradeID : in
                 trade.toUserClass.zoo.removeCreature(trade.toData.creature)
                 trade.fromUserClass.zoo.removeCreature(trade.fromData.creature)
 
-                print(trade.toUserClass.zoo.creatures)
-
-                trade.toUserClass.zoo.saveCreatures()
-                trade.fromUserClass.zoo.saveCreatures()
-
                 await trade.end("Trade Completed")
-                await trade.channel.send(f'> `{trade.fromUser}` got `{trade.toUser}`\'s {self.zoo.Creature(trade.toData.creature).readableName} in return for a {self.zoo.Creature(trade.fromData.creature).readableName}')
+                await trade.channel.send(f'> `{trade.fromUser}` got `{trade.toUser}`\'s {trade.toData.creature.name_formatted} in return for a {trade.fromData.creature.name_formatted}')
 
                 for item in self.view.children:
                     item.disabled = True 
@@ -101,13 +96,10 @@ async def get_accept_view(client : qc.Client, zoo : qc.classes.Zoo, tradeID : in
 
             
 
-async def trade(client : qc.Client, ctx : commands.Context, user : discord.User, your_creature : str, their_creature : str):
+async def trade(client : qc.Client, ctx : commands.Context, user : discord.User, your_creature_name : str, their_creature_name : str):
 
-    zoo = client.get_zoo()
+    zoo = client.zoo
     zoo.getTrades()
-
-    allData = zoo.creatures
-
 
     author = qc.classes.User(client, ctx.author)
     otherUser = qc.classes.User(client, user)
@@ -118,13 +110,16 @@ async def trade(client : qc.Client, ctx : commands.Context, user : discord.User,
     your_creatures = author.zoo.creatures
     their_creatures = otherUser.zoo.creatures
 
+    your_creature = zoo.get_creature(your_creature_name)
+    their_creature = zoo.get_creature(their_creature_name)
+
     tradeID = len(zoo.trades) + 1
     
     
     if your_creature not in your_creatures:
         raise qc.errors.MildError("> You do not own this creature.")
     
-    if their_creature not in allData or their_creature not in their_creatures:
+    if their_creature not in zoo.creatures or their_creature not in their_creatures:
         raise qc.errors.MildError("> They do not own this creature.")
     
     if their_creature == your_creature:
@@ -158,11 +153,8 @@ async def trade(client : qc.Client, ctx : commands.Context, user : discord.User,
     except:
         pass
 
-    their_creature : qc.classes.Zoo.Creature = zoo.Creature(their_creature)
-    your_creature : qc.classes.Zoo.Creature = zoo.Creature(your_creature)
-
     embed = discord.Embed(
-        title=f"{ctx.author} wants to trade your {their_creature.emoji} {their_creature.readableName} for a {your_creature.emoji} {your_creature.readableName}!",
+        title=f"{ctx.author} wants to trade your {their_creature.emoji} {their_creature.name_formatted} for a {your_creature.emoji} {your_creature.name_formatted}!",
         description="Use the reactions to accept or decline. **Both users have to accept.**",
         color=qc.var.embed
     )
@@ -210,7 +202,7 @@ async def trade(client : qc.Client, ctx : commands.Context, user : discord.User,
 
 async def trade_list(client : qc.Client, ctx : commands.Context, bound : str, user : discord.User):
 
-    zoo = client.get_zoo()
+    zoo = client.zoo
     zoo.getTrades()
 
     if bound == "outbound":
@@ -236,7 +228,7 @@ async def trade_list(client : qc.Client, ctx : commands.Context, bound : str, us
                 value=
                 f"Status: `{'Sent' if 'creature' in zoo.trades[tradeID]['to'] and 'creature' in zoo.trades[tradeID]['from'] else 'Uncomplete'}`" + 
                 f" - Your creature: `{'Unchosen' if 'creature' not in zoo.trades[tradeID]['from'] else zoo.trades[tradeID]['from']['creature'].replace('_', ' ').title()}`" + 
-                f" - Their creature: `{'Unchosen' if 'creature' not in zoo.trades[tradeID]['to'] else zoo.Creature(zoo.trades[tradeID]['to']['creature']).readableName}`",
+                f" - Their creature: `{'Unchosen' if 'creature' not in zoo.trades[tradeID]['to'] else zoo.get_creature(zoo.trades[tradeID]['to']['creature']).name_formatted}`",
                 inline=False
             )
     
@@ -244,11 +236,9 @@ async def trade_list(client : qc.Client, ctx : commands.Context, bound : str, us
 
 async def load_views(client : qc.Client):
 
+    client.zoo.getTrades()
 
-    zoo = client.get_zoo()
-    zoo.getTrades()
-
-    for trade_id, trade in zoo.trades.items():
-        view = await get_accept_view(client, zoo, int(trade_id))
+    for trade_id, trade in client.zoo.trades.items():
+        view = await get_accept_view(client, client.zoo, int(trade_id))
 
         client.bot.add_view(view, message_id=int(trade["data"]["message"]))

@@ -1,42 +1,26 @@
 {
-    "368071242189897728": [
-        "potato_mine",
-        "seal",
-        "dash",
-        "brainslug",
-        "kabu",
-        "furcorn",
-        "tiger",
-        "fish",
-        "parrot",
-        "seal",
-        "squash",
-        "squash",
-        "parrot",
-        "gordo",
-        "golden_test5",
-        "t-rex",
-        "golden_test2",
-        "shiny_dog",
-        "shiny_blixer",
-        "swan",
-        "squid",
-        "sheep",
-        "squid",
-        "huebird",
-        "moon"
-    ],
-    "342136746944757760": [
-        "fall_guy",
-        "cheems",
-        "noggin",
-        "maw",
-        "shiny_zombie",
-        "chain_chomp",
-        "owl"
-    ],
-    "418123290595426314": [
-        "parrot",
-        "elephant"
-    ]
+    "368071242189897728": {
+        "turtle": 1,
+        "jellyfish": 1,
+        "shy_guy": 1,
+        "shiny_dog": 2,
+        "mosquito": 1,
+        "shiny_cow": 1,
+        "shiny_cat": 2,
+        "eagle": 1,
+        "shiny_dinosaur": 1,
+        "extreme_demon": 1,
+        "golden_strawberry": 1,
+        "shape_sun": 1,
+        "dino": 1,
+        "cactus": 1,
+        "rice_ball": 1,
+        "tornado": 1,
+        "plantern": 1,
+        "bloon": 1,
+        "coolo2": 1,
+        "brain": 1,
+        "salt": 1,
+        "dodo": 1
+    }
 }

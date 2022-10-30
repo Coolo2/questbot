@@ -19,34 +19,24 @@ async def command(client : qc.Client, ctx : commands.Context, userO : discord.Us
         userO = ctx.author
     
     user = qc.classes.User(client, userO)
-    
-    user.zoo.refreshProducers()
 
-    shardProducers = [] 
-    shinyProd = []
-    standardProd = [] 
+    shinyProd : typing.List[qc.classes.ShardProducer] = []
+    standardProd : typing.List[qc.classes.ShardProducer] = [] 
     perHour = 0
 
-    for shardProducerName in user.zoo.shardProducers:
-        producer = user.zoo.zoo.ShardProducer(shardProducerName, 
-                user.zoo.shardProducers[shardProducerName]["birthdate"],
-                user.zoo.shardProducers[shardProducerName]["level"],
-                user.zoo.shardProducers[shardProducerName]["last_refreshed"]
-            )
+    for producer in user.zoo.shard_producers:
         if producer.rarity == "shiny":
             shinyProd.append(producer)
         else:
             standardProd.append(producer)
 
-        perHour += producer.shards / producer.hoursForShard    
+        perHour += producer.shards / producer.hours_for_shard    
 
     shinyProd = list(sorted(shinyProd, key=lambda item: item.level, reverse=True))
     standardProd = list(sorted(standardProd, key=lambda item: item.level, reverse=True))
-    shardProducers = shinyProd + standardProd
+    shardProducers : typing.List[qc.classes.ShardProducer] = shinyProd + standardProd
     
     perHour = round(perHour, 2)
-    shardProducers : typing.List[qc.classes.Zoo.ShardProducer] = shardProducers
-
     if len(shardProducers) == 0:
         return await ctx.send(f"> `{user.user}` has no shard producers.")
     
@@ -57,8 +47,8 @@ async def command(client : qc.Client, ctx : commands.Context, userO : discord.Us
 
     for producer in shardProducers:
         description_full += f"""
-[{producer.rarity.title()}] {producer.emoji} **{producer.readableName}** (Age: {(datetime.datetime.now() - producer.birthdate).days} days)
-**Level {producer.level}** - {producer.shards} {qc.var.shards_currency} every {producer.hoursForShard} hours
+{producer.emoji} **{producer.name_formatted}** (Age: {(datetime.datetime.now() - producer.birthdate).days} days)
+{'👑 ' if producer.level == 5 else ''}Level {producer.level} - {producer.shards} {qc.var.shards_currency} every {producer.hours_for_shard} hours
 _ _"""
 
     description_split = description_full.split("\n")

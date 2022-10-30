@@ -1,6 +1,7 @@
 
 import os
 import discord
+import typing
 
 production = False
 
@@ -42,3 +43,10 @@ UBbase = f"https://unbelievaboat.com/api/{UBversion}"
 
 host = "0.0.0.0"
 port = 5000
+
+role_unlockables : typing.Dict[str, discord.Object] = {
+    "camo":discord.Object(1031985906397221005), 
+    "light_camo":discord.Object(1031995996659519548), 
+    "amoled_camo":discord.Object(1031996985324081173),
+    "bot":discord.Object(1031997820498100244)
+}

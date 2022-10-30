@@ -120,5 +120,6 @@ quest = classes.Quest(
         classes.Reward(100_000, 10_000)
     ],
     check=check,
-    validate=validate
+    validate=validate,
+    amountType="stars"
 )

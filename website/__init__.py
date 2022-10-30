@@ -54,26 +54,13 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
         
         return quart.jsonify(xp)
     
-    @app.route("/api/creatures", methods=["GET"])
-    async def _api_creatures():
-        with open("resources/zoo/creatures.json") as f:
-            creatures = json.load(f)
-        
-        return quart.jsonify(client.get_zoo().creatures)
-    
-    @app.route("/api/emojis", methods=["GET"])
-    async def _api_emojis():
-        with open("resources/zoo/emojis.json", encoding="utf-8") as f:
-            emojis = json.load(f)
-        
-        return quart.jsonify(emojis)
-    
     async def api_profile(user_id):
         guild = bot.get_guild(client.var.allowed_guilds[0].id)
         
         user = bot.get_user(int(user_id))
         cl_user = qc.classes.User(client, user)
         await cl_user.economy.loadBal(guild)
+        cl_user.zoo.refresh_shard_producers()
 
         data = {}
 
@@ -92,16 +79,13 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
             "shards":cl_user.getShards()
         }
 
-        cl_user.zoo.getZoo()
-
         data["currency"] = f"https://cdn.discordapp.com/emojis/{client.var.currency.split(':')[2].replace('>', '')}.webp"
         data["shards_currency"] = f"https://cdn.discordapp.com/emojis/{client.var.shards_currency.split(':')[2].replace('>', '')}.webp"
         data["quest_xp_currency"] = f"https://cdn.discordapp.com/emojis/{client.var.quest_xp_currency.split(':')[2].replace('>', '')}.webp"
         data["creatures"] = []
 
         for creature in cl_user.zoo.creatures:
-            c = qc.classes.Zoo().Creature(creature)
-            data["creatures"].append({"name":c.name, "emoji":c.emoji, "unicode":c.emoji_unicode})
+            data["creatures"].append(creature.to_dict())
 
         data["profile_art"] : typing.List[dict] = []
         
@@ -226,12 +210,10 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
     @app.route("/api/profile/art", methods=["POST"])
     async def _toggle_profile_art():
         member = await get_member(quart.request)
-
         if not member:
             return quart.jsonify({"error":"Not logged in"})
         
         cl_user = qc.classes.User(client, member)
-        
         data : typing.Dict[str, str] = await quart.request.json
 
         for art_name, art_value in data.items():
@@ -242,12 +224,10 @@ async def generate_app(bot : commands.Bot, client : qc.Client) -> quart.Quart:
     @app.route("/api/profile/color", methods=["POST"])
     async def _change_profile_color():
         member = await get_member(quart.request)
-
         if not member:
             return quart.jsonify({"error":"Not logged in"})
         
         cl_user = qc.classes.User(client, member)
-        
         data : typing.Dict[str, str] = await quart.request.json
 
         await cl_user.profile.set_value("color", data)

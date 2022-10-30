@@ -57,7 +57,7 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
                     embed=discord.Embed(
                         color=qc.var.embedSuccess, 
                         title="Tiered up!", 
-                        description=f"You have been tiered up to tier {tier+1}! Use **{qc.var.prefix}start {quest.name}** to begin tier " + str(int(tier) + 1) + "!"
+                        description=f"You have been tiered up to tier {tier+1}! Use **/zoo start {quest.name}** to begin tier " + str(int(tier) + 1) + "!"
                     ),
                     view=view
                 )

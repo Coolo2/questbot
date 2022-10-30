@@ -15,9 +15,9 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
             progress = quest.getProgress(user)
 
             if progress.started and progress.finished and progress.redeemed: 
-                raise qc.errors.MildError(f"You have finished the {nameFormatted} quest on tier {progress.tier}! To tier up use **{qc.var.prefix}tier {quest.name}**")
+                raise qc.errors.MildError(f"You have finished the {nameFormatted} quest on tier {progress.tier}! To tier up use **/tier {quest.name}**")
             elif progress.started and progress.finished:
-                raise qc.errors.MildError(f"You have finished {nameFormatted} on tier {progress.tier}! (Use {qc.var.prefix}redeem to get a reward!)")
+                raise qc.errors.MildError(f"You have finished {nameFormatted} on tier {progress.tier}! (Use /zoo redeem to get a reward!)")
             elif progress.started:
                 raise qc.errors.MildError(f"You have already started this quest on tier {progress.tier}!")
             else:
@@ -25,7 +25,7 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
 
                 embed = discord.Embed(
                     title=f"You started {nameFormatted}!", 
-                    description=f"Started quest **{nameFormatted}** on tier {progress.tier}! When completed use **{qc.var.prefix}{'quests' if quest not in client.quest.miniquests else 'miniquests'}**",
+                    description=f"Started quest **{nameFormatted}** on tier {progress.tier}! When completed use **/{'quests' if quest not in client.quest.miniquests else 'miniquests'}**",
                     color=qc.var.embed
                 )
                 embed.add_field(name="How to complete", value=f"{nameFormatted} quest: {quest.description}")

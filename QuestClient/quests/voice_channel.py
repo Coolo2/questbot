@@ -45,5 +45,6 @@ quest = classes.Quest(
         classes.Reward(2000, 500) 
     ],
     check=check,
-    validate=validate
+    validate=validate,
+    amountType="VCs"
 )

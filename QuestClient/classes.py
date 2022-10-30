@@ -6,6 +6,7 @@ from discord.app_commands.commands import describe
 import QuestClient as qc
 
 if typing.TYPE_CHECKING:
+    import QuestClient as qcFr
     from QuestClient.classes import Quest as QuestFr
     from QuestClient import Client as ClientFr
     from QuestClient import classes as ClassesFr
@@ -21,12 +22,8 @@ import typing
 from discord import app_commands
 from discord.ext import commands
 
-import re
 import aiohttp
 import os
-
-with open("resources/zoo/emojis.json", encoding="utf-8") as f:
-    emojis_unicode_converter = json.load(f)
 
 class Badge():
     def __init__(self, 
@@ -36,7 +33,8 @@ class Badge():
                 image=None, 
                 quest : str = None, 
                 polaris_level : int = None,
-                quest_xp_level : int = None
+                quest_xp_level : int = None,
+                shard_production_day : int = None
     ):
         self.name = name 
         self.description = description
@@ -44,6 +42,7 @@ class Badge():
         self.quest = quest
         self.polaris_level = polaris_level
         self.quest_xp_level = quest_xp_level
+        self.shard_production_day = shard_production_day
         self.raw_name = name.lower().replace(" ", "_")
     
         self.custom_image = image 
@@ -58,10 +57,11 @@ class Badge():
         return None
 
 class Art():
-    def __init__(self, name : str, unlock : str, file : str):
+    def __init__(self, name : str, unlock : str, file : str, level : int = None):
         self.name = name 
         self.file = file
         self.unlock = unlock
+        self.level = level
 
         self.equipped : bool = False
 
@@ -74,10 +74,114 @@ class Validator():
         self.valid = valid 
         self.message = message 
 
+class CreatureType(str):
+    STANDARD = "standard"
+    SHINY = "shiny"
+    GOLDEN = "golden"
+
+    ALL = [STANDARD, SHINY, GOLDEN]
+
+class CreatureCategory(str):
+    MAMMAL = "mammal"
+    WINGED = "winged"
+    BUG = "bug"
+    OCEAN = "ocean"
+    FOOD = "food"
+    MAGIC = "magic"
+    NATURE = "nature"
+    JSAB = "jsab"
+    GEOMETRY_DASH = "geometry_dash" 
+    MARIO = "mario"
+    RHYTHM = "rhythm"
+    PLANTS_VS_ZOMBIES =  "plants_vs_zombies"
+    MINECRAFT = "minecraft"
+    MY_SINGING_MONSTERS = "my_singing_monsters"
+    MISC = "misc"
+    GOLDEN = "golden"
+    
+
+    ALL = [MAMMAL, WINGED, BUG, OCEAN, FOOD, MAGIC, NATURE, JSAB, GEOMETRY_DASH, MARIO, RHYTHM, PLANTS_VS_ZOMBIES, MINECRAFT, MY_SINGING_MONSTERS, MISC, GOLDEN]
+
+class Creature():
+    def __init__(
+                self, 
+                name : str, 
+                emoji : str, 
+                creature_type : CreatureType, 
+                creature_category : CreatureCategory, 
+                quips : typing.List[str]
+    ):
+        self.name = name 
+        self.emoji = emoji 
+        self.quips = quips 
+        self.type = creature_type
+        self.category = creature_category
+
+        self.__sellPriceHold : int = None
+
+        self.name_formatted = name.replace("_", " ").title()
+    
+    def get_quip(self) -> str:
+        torepl = '\*'
+        return f"""*"{random.choice(self.quips).replace('*', torepl) if len(self.quips) > 0 else '""'}"*"""
+    
+    @property 
+    def sell_price(self) -> int:
+        if not self.__sellPriceHold:
+            if self.type == CreatureType.STANDARD:
+                self.__sellPriceHold = random.randint(100, 300)
+            elif self.type == CreatureType.SHINY:
+                self.__sellPriceHold = random.randint(1000, 3000)
+            else:
+                self.__sellPriceHold = random.randint(10000, 50000)
+        
+        return self.__sellPriceHold
+    
+    def to_dict(self):
+        return {"name":self.name, "emoji":self.emoji, "type":self.type, "category":self.category, "quips":self.quips}
+
+class ShardProducer():
+    def __init__(self, name : str, birthday, level, lastRefreshed):
+        zoo = Zoo()
+
+        self.name = name 
+        self.name_formatted = name.replace("_", " ").title()
+
+        self.birthdate = datetime.strptime(birthday, "%d-%b-%Y (%H:%M:%S.%f)") if type(birthday) == str else birthday 
+        self.lastRefreshed = datetime.strptime(lastRefreshed, "%d-%b-%Y (%H:%M:%S.%f)") if type(lastRefreshed) == str else lastRefreshed 
+        self.level = level
+
+        creature = zoo.get_creature(name)
+        self.emoji = creature.emoji
+
+        self.rarity = creature.type
+
+        if self.rarity == "shiny":
+            self.shards = 5
+        else:
+            self.shards = 1
+    
+    @property 
+    def hours_for_shard(self):
+        return [None, 24, 18, 15, 12, 8][int(self.level)]
+
+    def to_json(self):
+        return {
+            "birthdate":self.birthdate.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+            "last_refreshed":self.lastRefreshed.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+            "level":int(self.level)
+        }
+
 class Zoo():
 
+    def get_creature(self, creature_name : str) -> Creature:
+        for creature in self.creatures:
+            if creature.name == creature_name.lower().replace(" ", "_"):
+                return creature 
+        return None
+
     class Crate():
-        def __init__(self, zoo, name, description, color, icon, emoji, cost, shinyPercentage):
+        def __init__(self, zoo : ClassesFr.Zoo, name : str, description : str, color, icon, emoji, cost, shinyPercentage):
             self.zoo = zoo
             self.name = name 
             self.description = description
@@ -93,80 +197,36 @@ class Zoo():
         def calculatePerc(self, percentage):
             return True if random.randint(1, 100) <= percentage else False
         
-        def getCreature(self) -> Zoo.Creature:
-            is_shiny = self.calculatePerc(self.shinyPercentage)
-            is_common = self.calculatePerc(63)
-            is_golden = self.calculatePerc(100)
-
-            if self.name == "collectors" and is_golden:
-                key = random.choice(list(self.zoo.creaturesRaw["golden"]))
-                return self.zoo.Creature(key, self.zoo.creaturesRaw["golden"][key])
-            elif is_shiny:
-                key = random.choice(list(self.zoo.creaturesRaw["rare"]))
-                return self.zoo.Creature(key, self.zoo.creaturesRaw["rare"][key])
-            elif is_common:
-                key = random.choice(list(self.zoo.creaturesRaw["common"]))
-                return self.zoo.Creature(key, self.zoo.creaturesRaw["common"][key])
-            else:
-                key = random.choice(list(self.zoo.creaturesRaw["very_common"]))
-                return self.zoo.Creature(key, self.zoo.creaturesRaw["very_common"][key])
-
-    class Creature():
-        def __init__(self, name : str, data=None):
-            zoo = Zoo()
-
-            self.name = name 
-            self.readableName = name.replace("_", " ").title()
-
-            if data == None:
-                data = zoo.creatures[name]
-
-            self.emoji : str = data["emoji"]
-            self.rarity = "golden" if name in zoo.creaturesRaw["golden"] else "rare" if name in zoo.creaturesRaw["rare"] else "common" if name in zoo.creaturesRaw else "very_common"
-
-            if self.rarity in ["common", "very_common"]:
-                self.sellPrice = random.randint(100, 300)
-            elif self.rarity in ["rare"]:
-                self.sellPrice = random.randint(1000, 3000)
-            else:
-                self.sellPrice = random.randint(10000, 50000)
-        
-        @property 
-        def emoji_unicode(self):
-            if self.emoji.replace(":", "") in emojis_unicode_converter:
-                return emojis_unicode_converter[self.emoji.replace(":", "")]
-            return None
+        def getCreature(self, user : ClassesFr.User = None) -> Creature:
             
-    
-    class ShardProducer():
-        def __init__(self, name, birthday, level, lastRefreshed):
-            zoo = Zoo()
-
-            self.name = name 
-            self.readableName = name.replace("_", " ").title()
-
-            self.birthdate = datetime.strptime(birthday, "%d-%b-%Y (%H:%M:%S.%f)") if type(birthday) == str else birthday 
-            self.lastRefreshed = datetime.strptime(lastRefreshed, "%d-%b-%Y (%H:%M:%S.%f)") if type(lastRefreshed) == str else lastRefreshed 
-            self.level = level
-
-            data = zoo.creatures[name]
-
-            self.emoji = data["emoji"]
-            self.rarity = "shiny" if name in zoo.creaturesRaw["rare"] or name in zoo.creaturesRaw["golden"] else "standard"
-
-            self.hoursForShard = [None, 24, 18, 15, 12, 8][int(self.level)]
-
-            if self.rarity == "shiny":
-                self.shards = 5
-            else:
-                self.shards = 1
+            if self.name == "creature":
+                is_shiny = self.calculatePerc(5)
+                if is_shiny:
+                    return random.choice(self.zoo.shiny_creatures)
+                else:
+                    return random.choice(self.zoo.creatures)
             
-        def to_json(self):
-            return {
-                "birthdate":self.birthdate.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
-                "last_refreshed":self.lastRefreshed.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
-                "level":int(self.level)
-            }
+            if self.name == "shiny":
+                is_shiny = self.calculatePerc(75)
+                if is_shiny:
+                    return random.choice(self.zoo.shiny_creatures)
+                else:
+                    return random.choice(self.zoo.creatures)
+            
+            if self.name == "collectors":
+                is_golden = self.calculatePerc(1)
+                is_unowned = self.calculatePerc(75)
+
+                creatures = self.zoo.creatures
+                if is_golden:
+                    creatures = self.zoo.golden_creatures
+                creature = random.choice(creatures)
+
+                if is_unowned:
+                    while creature in user.zoo.creatures:
+                        creature = random.choice(creatures)
+                
+                return creature
             
     class Crates():
 
@@ -206,13 +266,15 @@ class Zoo():
                 25_000, 
                 75
             )
+
+            self.all = [self.creature, self.shiny, self.collectors]
         
     class Trade():
 
         class FromTo():
-            def __init__(self, user, creature, accepted=False):
-                self.userID = user 
-                self.creature : str = creature 
+            def __init__(self, client : ClientFr, user_id, creature_name : str, accepted=False):
+                self.userID : int = user_id
+                self.creature : Creature = client.zoo.get_creature(creature_name)
                 self.accepted = accepted
         
         class Data():
@@ -230,8 +292,8 @@ class Zoo():
             self.client = client
             self.id = id
             id = str(id)
-            self.fromData = self.FromTo(data[id]["from"]["user"], data[id]["from"]["creature"], data[id]["from"]["accepted"])
-            self.toData = self.FromTo(data[id]["to"]["user"], data[id]["to"]["creature"], data[id]["to"]["accepted"])
+            self.fromData = self.FromTo(client, data[id]["from"]["user"], data[id]["from"]["creature"], data[id]["from"]["accepted"])
+            self.toData = self.FromTo(client, data[id]["to"]["user"], data[id]["to"]["creature"], data[id]["to"]["accepted"])
             self.data = self.Data(data[id]["data"]["channel"], data[id]["data"]["message"], data[id]["data"]["to_message"], data[id]["data"]["from_message"], data[id]["data"]["started"])
             self.raw = data
         
@@ -243,12 +305,12 @@ class Zoo():
             data[str(self.id)] = {
                 "from": {
                     "user":str(self.fromData.userID), 
-                    "creature":self.fromData.creature,
+                    "creature":self.fromData.creature.name,
                     "accepted":self.fromData.accepted
                 }, 
                 "to":{
                     "user":str(self.toData.userID), 
-                    "creature":self.toData.creature,
+                    "creature":self.toData.creature.name,
                     "accepted":self.toData.accepted
                 }, 
                 "data":{
@@ -274,7 +336,7 @@ class Zoo():
                 
 
                 embed = discord.Embed(
-                    title=f"~~{self.fromUser} wants to trade your {Zoo().Creature(self.toData.creature).emoji} {Zoo().Creature(self.toData.creature).readableName} for a {Zoo().Creature(self.fromData.creature).emoji} {Zoo().Creature(self.fromData.creature).readableName}!~~",
+                    title=f"~~{self.fromUser} wants to trade your {self.toData.creature.emoji} {self.toData.creature.name_formatted} for a {self.fromData.creature.emoji} {self.fromData.creature.name_formatted}!~~",
                     description=f"~~Use the reactions to accept or decline. **Both users have to accept.**~~\n\n{reason}",
                     color=var.embed
                 )
@@ -332,19 +394,10 @@ class Zoo():
 
     def __init__(self):
 
-        with open("resources/zoo/creatures.json", encoding="utf8") as f:
-            data = json.load(f) 
-        
-        allData = {}
-
-        allData.update(data["golden"])
-        allData.update(data["rare"])
-        allData.update(data["common"])
-        allData.update(data["very_common"])
-        
-        self.creaturesRaw = data
-        self.creatures = allData 
-        self.creatureList = list(self.creatures)
+        self.creatures = qc.data.creatures
+        self.standard_creatures = [c for c in qc.data.creatures if c.type == CreatureType.STANDARD]
+        self.shiny_creatures = [c for c in qc.data.creatures if c.type == CreatureType.SHINY]
+        self.golden_creatures = [c for c in qc.data.creatures if c.type == CreatureType.GOLDEN]
 
         self.crates = self.Crates(self)
         
@@ -370,9 +423,8 @@ class Zoo():
     def validateCreatureExists(self, creatureName):
 
         foundCreature = False
-        
-        for section in self.creatures:
-            if creatureName in section:
+        for creature in self.creatures:
+            if creature.name == creatureName:
                 foundCreature = True
         
         if foundCreature == False:
@@ -390,16 +442,16 @@ class Shop():
             self.cost = cost
             self.lasts = lasts
 
-            self.active_since : datetime = None
+            self.active : typing.Union[datetime, bool, None] = None
         
         def to_dict(self) -> dict:
-            return {"name":self.name.lower().replace(" ", "_"), "active_since":self.active_since.timestamp()}
+            return {"name":self.name.lower().replace(" ", "_"), "active":self.active.timestamp() if self.active else False}
 
     def __init__(self):
         self.conversionRate = self.getConversionRate()
 
         self.items = {
-            "mushroom":self.Item("Mushroom", "Gives you a small boost of stars for 48 hours", timedelta(hours=24), 3),
+            "mushroom":self.Item("Mushroom", "Gives you a small boost of stars for 24 hours", timedelta(hours=24), 3),
             "fire_flower":self.Item("Fire Flower", "Inflames your next rob success and gives you double the stars", None, 4),
             "double_cherry":self.Item("Double Cherry", "Doubles the reward for your next quest", None, 7),
             "mask":self.Item("Mask", "Blocks all fines for one week", timedelta(days=7), 10),
@@ -474,130 +526,144 @@ class User():
 
     class ZooUser():
 
-        def __init__(self, user):
+        def __init__(self, user : ClassesFr.User):
 
-            self.userClass = user
-            self.zoo : Zoo = None
+            self.user = user
+            self.zoo_held : Zoo = None
 
             self.shardProducers = None
         
-        def getZoo(self):
-            self.zoo = Zoo()
+        @property
+        def zoo(self) -> Zoo:
+            if not self.zoo_held:
+                self.zoo_held = Zoo()
+            return self.zoo_held
+        
+        
         
         @property 
-        def creatures(self) -> typing.List[str]:
+        def creatures(self) -> typing.List[Creature]:
             with open("data/zoo/ownedCreatures.json") as f:
                 data = json.load(f)
+            
+            user_data = data[str(self.user.user.id)] if str(self.user.user.id) in data else {}
 
-                return data[str(self.userClass.user.id)] if str(self.userClass.user.id) in data else []
+            new_data = []
+            for creature_name, amount in user_data.items():
+                for i in range(amount):
+                    new_data.append(self.zoo.get_creature(creature_name))
+            
+            return new_data
 
-        
-        def getShardProducers(self):
-
+        @property 
+        def shard_producers(self) -> typing.List[ShardProducer]:
             with open("data/zoo/ownedShardProducers.json") as f:
                 data = json.load(f)
 
-            self.shardProducers = data[str(self.userClass.user.id)] if str(self.userClass.user.id) in data else {}
+            producers_raw = data[str(self.user.user.id)] if str(self.user.user.id) in data else {}
+            shard_producers = []
+            for name, raw in producers_raw.items():
+                producer = ShardProducer(name, raw["birthdate"], raw["level"], raw["last_refreshed"])
+                shard_producers.append(producer)
 
-            return self.shardProducers
-        
-        def validateCreature(self, creatureName):
+                sinceRefresh = (datetime.now() - producer.lastRefreshed).total_seconds() / 60 / 60
 
-            if self.zoo == None:
-                self.getZoo()
+                while sinceRefresh >= producer.hours_for_shard:
+                    sinceRefresh -= producer.hours_for_shard
+                    self.user.addShards(producer.shards)
+
+                sinceRefresh = datetime.now() - timedelta(hours=sinceRefresh)
+
+                producers_raw[name]["last_refreshed"] = sinceRefresh.strftime("%d-%b-%Y (%H:%M:%S.%f)")
+            
+            data[str(self.user.user.id)] = producers_raw
+
+            with open("data/zoo/ownedShardProducers.json", "w") as f:
+                data = json.dump(data, f, indent=4)
+
+            return shard_producers
         
-            creatureExists = self.zoo.validateCreatureExists(creatureName)
+        def refresh_shard_producers(self) -> typing.List[ShardProducer]:
+            return self.shard_producers
+        
+        def has_creature(self, creature_name : str):
+        
+            creatureExists = self.zoo.validateCreatureExists(creature_name)
 
             if creatureExists.valid == False:
                 return Validator(False, creatureExists.message)
             
-            if self.creatures == None:
-                self.creatures
-            
-            if creatureName not in self.creatures:
+            if self.zoo.get_creature(creature_name) not in self.creatures:
                 return Validator(False, "You do not own this creature")
             
             return Validator(True)
             
-        def removeCreature(self, creatureName, amount=1):
-
+        def removeCreature(self, creature : Creature, amount=1):
             with open("data/zoo/ownedCreatures.json") as f:
                 data = json.load(f)
 
             creatures = self.creatures 
 
             for i in range(amount):
-                creatures.remove(creatureName)
+                creatures.remove(creature)
 
-            data[str(self.userClass.user.id)] = creatures
+            data[str(self.user.user.id)] = {c.name:creatures.count(c) for c in creatures}
 
             with open("data/zoo/ownedCreatures.json", "w") as f:
                 json.dump(data, f, indent=4)
 
             return creatures
 
-        
-        def addCreature(self, creatureName):
-
+        def addCreature(self, creature : Creature):
             with open("data/zoo/ownedCreatures.json") as f:
                 data = json.load(f)
 
             creatures = self.creatures 
+            creatures.append(creature)
 
-            creatures.append(creatureName)
-
-            data[str(self.userClass.user.id)] = creatures
+            data[str(self.user.user.id)] = {c.name:creatures.count(c) for c in creatures}
 
             with open("data/zoo/ownedCreatures.json", "w") as f:
                 json.dump(data, f, indent=4)
         
-        def saveCreatures(self):
-            with open("data/zoo/ownedCreatures.json") as f:
-                owned = json.load(f)
-            
-            owned[str(self.userClass.user.id)] = self.creatures
-
-            with open("data/zoo/ownedCreatures.json", "w") as f:
-                json.dump(owned, f, indent=4) 
-        
-        def saveShardProducers(self):
+        def add_shard_producer(self, creature : Creature):
             with open("data/zoo/ownedShardProducers.json") as f:
-                owned = json.load(f)
-            
-            owned[str(self.userClass.user.id)] = self.shardProducers
+                data = json.load(f)
+
+            producer = ShardProducer(creature.name, datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)"), 1, datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)"))
+
+            if str(self.user.user.id) not in data:
+                data[str(self.user.user.id)] = {}
+
+            data[str(self.user.user.id)][creature.name] = producer.to_json()
 
             with open("data/zoo/ownedShardProducers.json", "w") as f:
-                json.dump(owned, f, indent=4) 
+                json.dump(data, f, indent=4)
         
-        def refreshProducers(self):
-
-            user = self.userClass
-
-            if not self.shardProducers:
-                self.getShardProducers()
+        
+        def get_shard_producer(self, name : str) -> ShardProducer:
+            for shard_producer in self.shard_producers:
+                if shard_producer.name == name.replace(" ", "_").lower():
+                    return shard_producer 
+            return None
+        
+        def update_shard_producer(self, shard_producer : ShardProducer):
+            with open("data/zoo/ownedShardProducers.json") as f:
+                data = json.load(f)
             
-            if not self.zoo:
-                self.getZoo()
-            
-            for shardProducer in self.shardProducers:
-                producer = self.zoo.ShardProducer(
-                    shardProducer, 
-                    self.shardProducers[shardProducer]["birthdate"], 
-                    self.shardProducers[shardProducer]["level"],
-                    self.shardProducers[shardProducer]["last_refreshed"]
-                )
+            data[str(self.user.user.id)][shard_producer.name] = shard_producer.to_json()
 
-                sinceRefresh = (datetime.now() - producer.lastRefreshed).total_seconds() / 60 / 60
+            with open("data/zoo/ownedShardProducers.json", "w") as f:
+                json.dump(data, f, indent=4)
+        
+        @property
+        def hourly_shard_amount(self) -> float:
+            perHour = 0
+            for producer in self.shard_producers:
+                perHour += producer.shards / producer.hours_for_shard   
+            return perHour
 
-                while sinceRefresh >= producer.hoursForShard:
-                    sinceRefresh -= producer.hoursForShard
-                    self.userClass.addShards(producer.shards)
-
-                sinceRefresh = datetime.now() - timedelta(hours=sinceRefresh)
-
-                self.shardProducers[shardProducer]["last_refreshed"] = sinceRefresh.strftime("%d-%b-%Y (%H:%M:%S.%f)")
-
-            self.saveShardProducers()
+        
             
     class ItemUser():
 
@@ -621,13 +687,30 @@ class User():
 
             for item in self.data_raw:
                 itm = Shop().items[item["name"]]
-                itm.active_since = datetime.fromtimestamp(item["active_since"])
+                itm.active = datetime.fromtimestamp(item["active"]) if item["active"] else False
 
                 itms.append(itm)
             
             return itms
         
-        def buy_item(self, item : ClassesFr.Shop.Item) -> ClassesFr.Shop.Item:
+        def activate_item(self, item : ClassesFr.Shop.Item) -> ClassesFr.Shop.Item:
+            
+            with open("data/items.json") as f:
+                data = json.load(f)
+            
+            for item_raw in data[str(self.user.user.id)]:
+                if item_raw["name"] == item.raw_name:
+                    item_raw["active"] = datetime.now().timestamp()
+
+            with open("data/items.json", "w") as f:
+                json.dump(data, f, indent=4)
+            
+            item.active = datetime.now()
+
+            return item
+
+        
+        def buy_item(self, item : ClassesFr.Shop.Item, free=False) -> ClassesFr.Shop.Item:
 
             with open("data/items.json") as f:
                 data = json.load(f)
@@ -635,18 +718,25 @@ class User():
             if str(self.user.user.id) not in data:
                 data[str(self.user.user.id)] = []
             
-            item.active_since = datetime.now()
+            item.active = False
 
             data[str(self.user.user.id)].append(item.to_dict())
 
             with open("data/items.json", "w") as f:
                 json.dump(data, f, indent=4)
             
-            self.user.addShards(0-item.cost)
+            if not free:
+                self.user.addShards(0-item.cost)
 
             return item
         
-        def has_item(self, item : ClassesFr.Shop.Item = None, name : str = None) -> bool:
+        def has_item(self, item : ClassesFr.Shop.Item = None, name : str = None, active : bool =None) -> bool:
+
+            if active:
+                if item:
+                    return item.name in [i.name for i in self.items if i.active]
+                else:
+                    return name in [i.raw_name for i in self.items if i.active]
 
             if item:
                 return item.name in [i.name for i in self.items]
@@ -678,17 +768,17 @@ class User():
 
             remove_timestamps : typing.List[float] = []
             for item in items:
-                if item.lasts:
-                    ends_at = (item.active_since + item.lasts)
+                if item.lasts and item.active:
+                    ends_at : datetime = (item.active + item.lasts)
 
                     if ends_at.timestamp() < datetime.now().timestamp():
-                        remove_timestamps.append(item.active_since.timestamp())
+                        remove_timestamps.append(item.active.timestamp())
             
             if remove_timestamps != []:
                 to_remove : typing.List[dict] = []
                 for item in self.data_raw:
                     for i in remove_timestamps:
-                        if int(item["active_since"]) == int(i):
+                        if item["active"] and int(item["active"]) == int(i):
                             to_remove.append(item)
                 
                 for r in to_remove:
@@ -714,6 +804,8 @@ class User():
                     badge_list.append(badge)
                 if badge.quest_xp_level and badge.quest_xp_level <= getQuestXPLevel(self.user.getXP()):
                     badge_list.append(badge)
+                if badge.shard_production_day and self.user.zoo.hourly_shard_amount*24 > badge.shard_production_day:
+                    badge_list.append(badge)
             
             for quest in self.user.client.quest.quests:
                 progress = quest.getProgress(self.user.user)
@@ -734,6 +826,9 @@ class User():
         
         @property
         def profile_art(self) -> typing.Dict[str, ClassesFr.Art]:
+            resp = {}
+            quest_xp_level = getQuestXPLevel(self.user.getXP())
+
             with open("data/profile.json") as f:
                 data = json.load(f)
             
@@ -743,7 +838,6 @@ class User():
             if "art" not in data[str(self.user.user.id)]:
                 data[str(self.user.user.id)]["art"] = {}
             
-            resp = {}
             pa = qc.data.profile_art.copy()
             
             for art_name, owned_type in data[str(self.user.user.id)]["art"].items():
@@ -753,6 +847,10 @@ class User():
                     art.equipped = True
 
                 resp[art_name] = art
+            
+            for art_name, art in qc.data.profile_art.items():
+                if art.level and art.level <= quest_xp_level:
+                    resp[art_name] = art
             
             return resp
         
@@ -781,7 +879,8 @@ class User():
             if "art" not in data[str(self.user.user.id)]:
                 data[str(self.user.user.id)]["art"] = {}
             
-            data[str(self.user.user.id)]["art"][art_name] = value 
+            if art_name in data[str(self.user.user.id)]["art"] or value == "equipped":
+                data[str(self.user.user.id)]["art"][art_name] = value 
 
             with open("data/profile.json", "w") as f:
                 json.dump(data, f, indent=4)
@@ -894,12 +993,37 @@ class User():
             json.dump(data, f, indent=4)
         
         return getattr(self, type)
+    
+    @property 
+    def unlockable_roles(self) -> typing.List[qcFr.data.LevelReward]:
+        quest_xp_level = getQuestXPLevel(self.getXP())
+        response = []
+
+        if quest_xp_level >= 15:
+            response.append(qc.data.levels[14])
+
+        return response
 
 class Reward():
 
     def __init__(self, stars = 0, xp = 0):
         self.stars = stars 
         self.xp = xp
+    
+    @property 
+    def name(self) -> str:
+        if self.xp != 0 and self.stars != 0:
+            n = f"{self.xp:,d} Quest XP, {self.stars:,d} stars"
+        elif self.xp:
+            n = f"{self.xp:,d} Quest XP"
+        elif self.stars != 0:
+            n = f"{self.stars:,d} stars"
+        
+        return n
+    
+    @property 
+    def name_emoji(self) -> str:
+        return self.name.replace("Quest XP", var.quest_xp_currency).replace("stars", var.currency)
 
 class QuestProgress():
 
@@ -945,7 +1069,7 @@ class QuestProgress():
 
 class Quest:
 
-    def __init__(self, name : str, description : str, tiers : int, resetOnTier : bool, required : typing.List[int], reward : typing.List[Reward], check : Coro, validate : Coro = None, start = None, tierUp = None):
+    def __init__(self, name : str, description : str, tiers : int, resetOnTier : bool, required : typing.List[int], reward : typing.List[Reward], check : Coro, validate : Coro = None, start = None, tierUp = None, amountType : str = None):
 
         self.name = name 
         self.description = description 
@@ -953,6 +1077,9 @@ class Quest:
         self.resetOnTier = resetOnTier
         self.required = required
         self.reward = reward
+        self.amountType = amountType
+
+        self.name_formatted = self.name.replace("_", " ").title()
 
         self.check = check 
 
@@ -982,6 +1109,8 @@ class Quest:
 
         with open(f"data/quests/{self.name}.json") as f:
             data = json.load(f)
+        if str(user.id) not in data:
+            data[str(user.id)] = {}
         data[str(user.id)]["value"] = amount
         with open(f"data/quests/{self.name}.json", "w") as f:
             json.dump(data, f, indent=4)
@@ -1090,7 +1219,7 @@ class Quest:
         view.add_item(button(client=client, quest=self))
 
         await user.send(embed=discord.Embed(color=var.embed, title=f"You completed the **{self.name.replace('_', ' ').title()}** quest!", 
-            description=f"Use **{var.prefix}redeem {self.name}** in {guild.name} to claim your reward"), view=view)
+            description=f"Use **/zoo redeem {self.name}** in {guild.name} to claim your reward"), view=view)
 
 class EmbedReader():
     def __init__(self, client : ClientFr, embed : discord.Embed):

@@ -28,5 +28,6 @@ quest = classes.Quest(
     reward=[None, 
         classes.Reward(3000, 1000) 
     ],
-    check=check
+    check=check,
+    amountType="pings"
 )

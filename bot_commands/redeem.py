@@ -17,7 +17,7 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
             
 
             if progress.started and progress.finished and progress.redeemed: 
-                embed = discord.Embed(title="Oops!", description=f"You have already redeemed the {quest.name} quest tier {progress.tier}! To tier up use **{qc.var.prefix}tier {quest.name}**", color=qc.var.embedFail)
+                embed = discord.Embed(title="Oops!", description=f"You have already redeemed the {quest.name} quest tier {progress.tier}! To tier up use **/tier {quest.name}**", color=qc.var.embedFail)
             elif progress.started and progress.finished:
                 
                 #multiplier = await client.quest.useMultiplier(user)
@@ -39,14 +39,14 @@ async def command(client : qc.Client, ctx : commands.Context, quest_name : str):
                 
                 embed = discord.Embed(
                     title=f"You redeemed {quest.name.replace('_', ' ').title()}!", 
-                    description=f"You redeemed this quest, which gave you {f'**{reward.stars*multiplier:,d}** stars' if reward.stars != 0 else ''}{' and ' if reward.stars != 0 and reward.xp != 0 else ''}{f'**{reward.xp*multiplier:,d}** {qc.var.quest_xp_currency}' if reward.xp != 0 else ''}! {f'Use **{qc.var.prefix}tier {quest.name}** to tier up!' if quest.tiers > 1 and progress.tier < quest.tiers else ''}",
+                    description=f"You redeemed this quest, which gave you {f'**{reward.stars*multiplier:,d}** stars' if reward.stars != 0 else ''}{' and ' if reward.stars != 0 and reward.xp != 0 else ''}{f'**{reward.xp*multiplier:,d}** {qc.var.quest_xp_currency}' if reward.xp != 0 else ''}! {f'Use **/tier {quest.name}** to tier up!' if quest.tiers > 1 and progress.tier < quest.tiers else ''}",
                     color=qc.var.embedSuccess
                 )
                 
             elif progress.started:
                 embed = discord.Embed(title="Oops!", description=f"You haven't completed this quest on tier {progress.tier}!", color=qc.var.embedFail)
             else:
-                embed = discord.Embed(title="Oops!", description=f"You havent started this quest on tier {progress.tier} yet! Use **{qc.var.prefix}start {quest.name}**", color=qc.var.embedFail)
+                embed = discord.Embed(title="Oops!", description=f"You havent started this quest on tier {progress.tier} yet! Use **/zoo start {quest.name}**", color=qc.var.embedFail)
             
 
             if quest.tiers > 1 and embed.color.value == qc.var.embedSuccess:

@@ -72,52 +72,48 @@ class CheckoutView(discord.ui.View):
         await interaction.response.edit_message(view=self)
 
 
-async def crate(client : qc.Client, ctx : commands.Context, crate_type : str, cog):
+async def crate(client : qc.Client, ctx : commands.Context, crate_type : str, cog, amount = 1):
+    if amount == None:
+        amount = 1
+    
+    if amount > 10:
+        raise qc.errors.MildError("You cannot buy more than 10 crates at once!")
 
     user = qc.classes.User(client, ctx.author)
-    user.zoo.getZoo()
 
     if crate_type == None:
         embed = discord.Embed(title="Crate shop", color=qc.var.embed)
-
-        for crate in [user.zoo.zoo.crates.creature, user.zoo.zoo.crates.shiny, user.zoo.zoo.crates.collectors]:
-
+        for crate in user.zoo.zoo.crates.all:
             embed.add_field(
-                name=f"{crate.emoji}  {crate.readableName} - {qc.var.prefix}buy {crate.name}", value=f"{crate.description}. **({crate.price:,d}{qc.var.currency})**", inline=False)
+                name=f"{crate.emoji}  {crate.readableName} - /buy {crate.name}", value=f"{crate.description}. **({crate.price:,d}{qc.var.currency})**", inline=False)
 
         return await ctx.send(embeds=[embed])
-
-
+    
     if crate_type == "creature":
         crate = user.zoo.zoo.crates.creature  
-        creature = crate.getCreature()
     if crate_type == "shiny":
         crate = user.zoo.zoo.crates.shiny
-        creature = crate.getCreature()
-    
     if crate_type == "collectors":
         crate = user.zoo.zoo.crates.collectors
-        creature = crate.getCreature()
-        
-        if crate.calculatePerc(75):
-
-            if str(ctx.author.id) in user.zoo.creatures:
-                while creature.name in user.zoo.creatures[str(ctx.author.id)]:
-                    creature = crate.getCreature()
 
     await user.economy.loadBal(ctx.guild)
 
-    if user.economy.bank < crate.cost:
-        embed = discord.Embed(title="Uh oh!", description=f'You do not have enough money ({crate.cost:,d}) **in bank** for this crate!', color=qc.var.embedFail)
+    if user.economy.bank < crate.cost*5:
+        embed = discord.Embed(title="Uh oh!", description=f'You do not have enough money ({crate.cost*amount:,d}) **in bank** for this purchase!', color=qc.var.embedFail)
         return await ctx.send(embeds=[embed])
-
-    user.zoo.addCreature(creature.name)
-    user.zoo.saveCreatures()
-    await user.economy.addBal(bank=0-crate.cost)
     
-    amount = user.zoo.creatures.count(creature.name)
+    embed = discord.Embed(title=f"Here's your {crate.name.title()} crate{'s' if amount == 1 else ''}!", description="", color=qc.var.embedSuccess)
 
-    embed = discord.Embed(title=f"Here's your {crate.name.title()} Crate!", description=f'**1x** {creature.emoji} {creature.readableName}\n\n{"**New creature!** " if amount == 1 else ""}You now have {amount} {creature.readableName}{"" if amount == 1 else "s"}', color=crate.color)
+    for i in range(amount):
+        creature = crate.getCreature(user)
+
+        user.zoo.addCreature(creature)
+
+        creature_amount = user.zoo.creatures.count(creature)
+        embed.description += f'\n**1x** {creature.emoji} {creature.name_formatted}\n{creature.get_quip()}\n{"**New creature!** " if creature_amount == 1 else ""}You now have {creature_amount} {creature.name_formatted}{"" if creature_amount == 1 else "s"}\n'
+
+    embed.description = embed.description[:4000]
+    await user.economy.addBal(bank=0-(crate.cost * amount))
 
     embed.set_thumbnail(url=crate.icon)
     embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
@@ -161,7 +157,7 @@ async def item(client : qc.Client, ctx : commands.Context, item : str):
     user = qc.classes.User(client, ctx.author)
     shop = qc.classes.Shop()
     
-    user.zoo.refreshProducers()
+    user.zoo.refresh_shard_producers()
     shards : int = user.getShards()
 
     user.item.refresh_items()
@@ -171,20 +167,11 @@ async def item(client : qc.Client, ctx : commands.Context, item : str):
     if shards < item.cost:
         raise qc.errors.MildError(f"You do not have enough shards ({item.cost:,d}) **in your bank** to purchase this item.")
 
-    for i in user.item.items:
-        if i.name == item.name:
-            if i.lasts:
-                ends_at_relative = f"<t:{round((i.active_since + i.lasts).timestamp())}:f>"
-
-            raise qc.errors.MildError(f"You already have a {i.name} active. {f'Wait till this item runs out on {ends_at_relative}' if i.lasts else ''}")
-
-    new_item = user.item.buy_item(item)
+    user.item.buy_item(item)
     
     desc = f"Successfully purchased a **{item.name}** for **{item.cost} {qc.var.shards_currency}**!"
-
-    if item.lasts:
-        ends_at_relative = f"<t:{round((item.active_since + new_item.lasts).timestamp())}:f>"
-        desc += f" This item will last until {ends_at_relative}"
+    if not user.item.has_item(item=item, active=True):
+        desc += f"\n\nActivate it with **/item activate {item.name}**"
 
     embed = discord.Embed(title=f"Successfully bought {item.name}", description=desc, color=client.var.embedSuccess)
     await ctx.send(embed=embed)

@@ -7,6 +7,7 @@ from discord.ext import commands
 
 import QuestClient as qc
 from QuestClient import classes
+from QuestClient.classes import CreatureType
 
 def chunks(lst, n):
     for i in range(0, len(lst), n):
@@ -29,41 +30,33 @@ async def command(client : ClientFr, ctx : commands.Context, page : int = None, 
         oUser = ctx.author
     
     user = classes.User(client, oUser)
-    user.zoo.creatures
-    user.zoo.getZoo()
     
-    allData = {}
+    all_creatures = reversed(qc.data.creatures)
 
     if filter == "standard":
-        allData.update(user.zoo.zoo.creaturesRaw["common"])
-        allData.update(user.zoo.zoo.creaturesRaw["very_common"])
+        all_creatures = user.zoo.zoo.standard_creatures
     elif filter == "shiny":
-        allData.update(user.zoo.zoo.creaturesRaw["rare"])
+        all_creatures = user.zoo.zoo.shiny_creatures
     elif filter == "golden":
-        allData.update(user.zoo.zoo.creaturesRaw["golden"])
+        all_creatures = user.zoo.zoo.golden_creatures
     else:
         filter = None
-        allData.update(user.zoo.zoo.creaturesRaw["golden"])
-        allData.update(user.zoo.zoo.creaturesRaw["rare"])
-        allData.update(user.zoo.zoo.creaturesRaw["common"])
-        allData.update(user.zoo.zoo.creaturesRaw["very_common"])
 
     try:
         page = int(page)
     except:
-        raise qc.errors.MildError(f"> Page must be a number. `{client.var.prefix}list *[{'/'.join(accepted)}] *[user] *[page]`")
+        raise qc.errors.MildError(f"> Page must be a number. `/zoo list *[{'/'.join(accepted)}] *[user] *[page]`")
     
     ownedUsr = user.zoo.creatures
-
     ownedUsr = list(sorted(ownedUsr, key=lambda item: ownedUsr.count(item), reverse=True))
 
     creaturesOld = []
     creatureCount = 0
 
-    for creature in allData:
+    for creature in all_creatures:
         if creature in ownedUsr:
             creatureCount += ownedUsr.count(creature)
-            creaturesOld.append(f'{allData[creature]["emoji"]} {ownedUsr.count(creature)}x {creature.replace("_", " ").title()}\n')
+            creaturesOld.append(f'{creature.emoji} {ownedUsr.count(creature)}x {creature.name_formatted}\n')
 
     per_page = 15
     creatures = ["".join(creaturesOld[i:i+per_page]) for i in range(0, len(creaturesOld), per_page)]

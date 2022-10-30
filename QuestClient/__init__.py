@@ -69,11 +69,16 @@ class Client():
         self.quest = QuestClient(self)
 
         self.eco_totals : dict = {}
-    
-    
-    def get_zoo(self):
 
-        return classes.Zoo()
+        self.__zoo_hold : classes.Zoo = None
+    
+    
+    @property 
+    def zoo(self):
+        if not self.__zoo_hold:
+            self.__zoo_hold = classes.Zoo()
+            
+        return self.__zoo_hold
     
     async def initialise_ub(self):
         guild = self.bot.get_guild(var.allowed_guilds[0].id)

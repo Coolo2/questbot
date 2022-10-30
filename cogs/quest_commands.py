@@ -7,8 +7,9 @@ import QuestClient as qc
 import requests 
 from PIL import Image
 
-from bot_commands import buy, zoo_list, shop, zoo_sell, zoo_catalog, zoo_trade, zoo_merge, zoo_shardproducers, zoo_upgrade
-from bot_commands import balance, quests, miniquests, start, redeem, tier, leaderboard, items, profile, compliment
+from bot_commands import buy, item_list, zoo_list, shop, zoo_sell, zoo_catalog, zoo_trade, zoo_merge, zoo_shardproducers, zoo_upgrade
+from bot_commands import balance, quests, miniquests, start, redeem, tier, leaderboard, profile, compliment, roles_view, roles_toggle
+from bot_commands import item_activate, quest, zoo_view
 
 from discord import app_commands
 from discord.ext.commands.hybrid import hybrid_group
@@ -21,6 +22,11 @@ class QuestCommandsCog(commands.Cog):
     @commands.hybrid_command(name="quests", description="Check quests", aliases=['myquests'])
     async def _quests(self, ctx : commands.Context, member : discord.Member = None):
         await quests.command(self.client, ctx, member)
+    
+    @commands.hybrid_command(name="quest", description="See information on a quest")
+    @app_commands.choices(quest_name=[app_commands.Choice(name=q.name.replace("_", " ").title(), value=q.name) for q in qc.quests + qc.miniquests])
+    async def _quest(self, ctx : commands.Context, quest_name : str):
+        await quest.command(self.client, ctx, quest_name)
     
     @commands.hybrid_command(name="miniquests", description="Check miniquests", aliases=['myminiquests'])
     async def _miniquests(self, ctx : commands.Context, member : discord.Member = None):
@@ -49,10 +55,6 @@ class QuestCommandsCog(commands.Cog):
     async def _leaderboard(self, ctx : commands.Context):
         await leaderboard.command(self.client, ctx)
     
-    @commands.hybrid_command(name="items", description="View your active items")
-    async def _items(self, ctx : commands.Context, user : discord.User = None):
-        await items.command(self.client, ctx, user)
-    
     @commands.hybrid_command(name="profile", description="See your profile")
     async def _profile(self, ctx : commands.Context, user : discord.User = None):
         await profile.command(self.client, ctx, user)
@@ -75,7 +77,7 @@ class QuestCommandsCog(commands.Cog):
 
         await zoo_list.command(self.client, ctx, page, member, filter)
     
-    @commands.hybrid_command(name="catalog", description="Show the zoo catalog")
+    @zoo.command(name="catalog", description="Show the zoo catalog")
     @app_commands.choices(section=[app_commands.Choice(name=i, value=i) for i in ["golden", "shiny", "standard"]])
     async def _zoo_catalog(self, ctx : commands.Context, section : str, user : discord.User = None):
         await zoo_catalog.command(self.client, ctx, section, user)
@@ -99,6 +101,11 @@ class QuestCommandsCog(commands.Cog):
     async def _zoo_sell(self, ctx : commands.Context, creature : str):
         await zoo_sell.command(self.client, ctx, creature)
     
+    @zoo.command(name="view", description="View one of your creatures up-close")
+    @app_commands.autocomplete(creature=qc.autocompletes.owned_creature_autocomplete)
+    async def _zoo_view(self, ctx : commands.Context, creature : str):
+        await zoo_view.command(self.client, ctx, creature)
+    
     @zoo_trade.command(name="list", description="List ongoing trades")
     @app_commands.choices(bound=[app_commands.Choice(name="Inbound", value="inbound"), app_commands.Choice(name="Outbound", value="outbound")])
     async def _zoo_trade_list(self, ctx : commands.Context, bound : str, user : discord.User = None):
@@ -108,6 +115,8 @@ class QuestCommandsCog(commands.Cog):
     @app_commands.autocomplete(your_creature=qc.autocompletes.owned_creature_autocomplete, their_creature=qc.autocompletes.owned_creature_autocomplete)
     async def _zoo_trade_trade(self, ctx : commands.Context, user : discord.User, your_creature : str, their_creature : str):
         await zoo_trade.trade(self.client, ctx, user, your_creature, their_creature)
+    
+    
     
     @hybrid_group()
     async def shop(self, ctx):
@@ -131,8 +140,8 @@ class QuestCommandsCog(commands.Cog):
 
     @buy.command(name="crate", description="Buy a crate from the zoo shop")
     @app_commands.choices(crate_type=[app_commands.Choice(name=i, value=i) for i in ["creature", "shiny", "collectors"]])
-    async def _buy_crate(self, ctx : commands.Context, crate_type : str):
-        await buy.crate(self.client, ctx, crate_type, self)
+    async def _buy_crate(self, ctx : commands.Context, crate_type : str, amount : int = None):
+        await buy.crate(self.client, ctx, crate_type, self, amount)
     
     @buy.command(name="item", description="Buy an item from the item shop")
     @app_commands.choices(item=[app_commands.Choice(name=n.name, value=v) for v, n in qc.classes.Shop().items.items()])
@@ -142,6 +151,32 @@ class QuestCommandsCog(commands.Cog):
     @buy.command(name="quest_xp", description="Convert stars to Quest XP")
     async def _buy_quest_xp(self, ctx : commands.Context, amount : app_commands.Range[int, 1]):
         await buy.quest_xp(self.client, ctx, amount)
+    
+    @hybrid_group()
+    async def roles(self, ctx):
+        pass 
+    
+    @roles.command(name="view", description="View your role unlockables")
+    async def _roles_view(self, ctx : commands.Context, user : discord.User = None):
+        await roles_view.command(self.client, ctx, user)
+
+    @roles.command(name="toggle", description="Toggle a role unlockable")
+    @app_commands.autocomplete(role=qc.autocompletes.unlockables)
+    async def _roles_toggle(self, ctx : commands.Context, role : str):
+        await roles_toggle.command(self.client, ctx, role)
+    
+    @hybrid_group()
+    async def item(self, ctx):
+        pass 
+
+    @item.command(name="list", description="List all of your owned items")
+    async def _item_list(self, ctx : commands.Context, user : discord.User = None):
+        await item_list.command(self.client, ctx, user)
+    
+    @item.command(name="activate", description="Activate one of your items")
+    @app_commands.choices(item=[app_commands.Choice(name=n.name, value=v) for v, n in qc.classes.Shop().items.items()])
+    async def _item_activate(self, ctx : commands.Context, item : str):
+        await item_activate.command(self.client, ctx, item)
     
     @commands.command(name="badge")
     async def _add_badge(self, ctx : commands.Context, name : str):
